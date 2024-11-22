@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="insert-comments" author="daff">
+        <insert tableName="comments">
+            <column  name="comment"  value="comment 1"/>
+            <column  name="author_id"  value="1"/>
+            <column  name="task_id"  value="1"/>
+        </insert>
+        <insert tableName="comments">
+            <column  name="comment"  value="comment 2"/>
+            <column  name="author_id"  value="2"/>
+            <column  name="task_id"  value="1"/>
+        </insert>
+        <insert tableName="comments">
+            <column  name="comment"  value="comment 3"/>
+            <column  name="author_id"  value="1"/>
+            <column  name="task_id"  value="2"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

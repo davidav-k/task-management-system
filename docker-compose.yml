@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:12.3
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tms
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 2
+
+#  tms-backend:
+#    container_name: tms-backend
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    environment:
+#      SERVER_PORT: 8181
+#      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tms
+#      SPRING_PROFILES_ACTIVE: postgresql
+#    ports:
+#      - "8181:8181"
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#    restart: on-failure
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+
+
+volumes:
+  pgadmin-data:
+
+networks:
+  default:
+    name: tms-network
+    external: true
+

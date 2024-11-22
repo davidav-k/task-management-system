@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="insert-tasks" author="daff">
+        <insert tableName="tasks">
+            <column  name="title"  value="task 1"/>
+            <column  name="description"  value="description task 1"/>
+            <column  name="status"  value="WAITING"/>
+            <column  name="priority"  value="HIGH"/>
+            <column  name="author_id"  value="1"/>
+            <column  name="assignee_id"  value="2"/>
+        </insert>
+        <insert tableName="tasks">
+            <column  name="title"  value="task 2"/>
+            <column  name="description"  value="description task 2"/>
+            <column  name="status"  value="WAITING"/>
+            <column  name="priority"  value="HIGH"/>
+            <column  name="author_id"  value="2"/>
+            <column  name="assignee_id"  value="2"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
