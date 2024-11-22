@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -23,10 +24,11 @@ public class AuthService {
     public Map<String, Object> createLoginInfo(Authentication authentication) {
 
         AppUserDetails principal = (AppUserDetails) authentication.getPrincipal();
-        UserRs userRs = userToUserRsConverter.convert(principal.getUser());
+        UserRs userRs = Optional.ofNullable(userToUserRsConverter.convert(principal.getUser()))
+                .orElseThrow(() -> new IllegalArgumentException("Conversion failed"));
         String token = jwtProvider.createToken(authentication);
 
-        assert userRs != null;
+
         redisCacheClient.set("whitelist:" + userRs.id(), token, 2, TimeUnit.HOURS);
 
         Map<String, Object> loginInfo = new HashMap<>();

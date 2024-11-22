@@ -15,7 +15,7 @@ import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
-@Profile("dev")
+@Profile("test")
 public class DBDataInitializer implements CommandLineRunner {
 
     private final UserService userService;

@@ -18,13 +18,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
 
 @Service
-@Transactional
-@ResponseBody
 @RequiredArgsConstructor
 public class UserService implements UserDetailsService {
 
@@ -42,11 +39,13 @@ public class UserService implements UserDetailsService {
         return userRepository.findAll();
     }
 
+    @Transactional
     public User create(User user) {
 
         return userRepository.save(user);
     }
 
+    @Transactional
     public User update(Long id, User update) {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -67,7 +66,7 @@ public class UserService implements UserDetailsService {
                 })
                 .orElseThrow(() -> new EntityNotFoundException("user not found"));
     }
-
+    @Transactional
     public void deleteById(Long id) {
         userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("user not found"));
 
@@ -83,6 +82,7 @@ public class UserService implements UserDetailsService {
                 ));
     }
 
+    @Transactional
     public void changePassword(Long userId, String oldPassword, String newPassword, String confirmNewPassword) {
 
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException(

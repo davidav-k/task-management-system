@@ -20,7 +20,7 @@ public class TaskController {
     private final TaskService taskService;
     private final TaskToTaskRsConvertor taskToTaskRsConvertor;
     private final TaskRqToTaskConvertor taskRqToTaskConvertor;
-
+    //Todo converters to services
     @GetMapping("/{id}")
     public Result findById(@PathVariable Long id) {
 

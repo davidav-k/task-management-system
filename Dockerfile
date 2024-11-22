@@ -12,4 +12,4 @@ COPY --from=builder application/snapshot-dependencies/ ./
 COPY --from=builder application/application/ ./
 EXPOSE 8181
 ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
-#, "--spring.profiles.active=postgresql"
+#, "--spring.profiles.active=prod"

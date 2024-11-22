@@ -18,14 +18,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
 import java.util.Map;
 
 @Service
-@Transactional
-@ResponseBody
 @RequiredArgsConstructor
 public class TaskService {
 
@@ -43,6 +40,7 @@ public class TaskService {
         return taskRepository.findAll();
     }
 
+    @Transactional
     public Task create(Task task) {
 
         return taskRepository.save(task);
@@ -57,6 +55,7 @@ public class TaskService {
                 .orElseThrow(() -> new EntityNotFoundException("task not found"));
     }
 
+    @Transactional
     public void deleteById(Long id) {
         taskRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("task not found"));
         taskRepository.deleteById(id);

@@ -23,11 +23,15 @@ public class User{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @NotEmpty(message = "username must be filled")
     private String username;
+
     @NotEmpty(message = "email must be filled")
     @Email
     private String email;
+
+    //Todo policy
     @NotEmpty(message = "password must be filled")
     private String password;
 

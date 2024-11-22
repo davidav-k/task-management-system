@@ -23,7 +23,7 @@ public class CommentController {
     private final CommentService commentService;
     private final CommentToCommentRsConverter commentToCommentRsConverter;
     private final CommentRqToCommentConverter commentRqToCommentConverter;
-
+    //Todo converters to services
     @GetMapping("/{id}")
     public Result findById(@PathVariable Long id) {
 

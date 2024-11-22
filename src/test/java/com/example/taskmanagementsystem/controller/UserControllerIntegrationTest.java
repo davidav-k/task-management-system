@@ -37,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @Testcontainers
 @AutoConfigureMockMvc
-@ActiveProfiles(value = "dev")
+@ActiveProfiles(value = "test")
 public class UserControllerIntegrationTest {
 
     @Autowired

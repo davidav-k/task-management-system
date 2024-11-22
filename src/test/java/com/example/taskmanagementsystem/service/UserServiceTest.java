@@ -30,7 +30,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@ActiveProfiles(value = "dev")
+@ActiveProfiles(value = "test")
 public class UserServiceTest {
     @Mock
     PasswordEncoder passwordEncoder;

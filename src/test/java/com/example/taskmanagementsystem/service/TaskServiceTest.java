@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
-@ActiveProfiles(value = "dev")
+@ActiveProfiles(value = "test")
 class TaskServiceTest {
 
     @Mock

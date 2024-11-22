@@ -8,13 +8,10 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.helpers.MessageFormatter;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
 
 @Service
-@Transactional
-@ResponseBody
 @RequiredArgsConstructor
 public class CommentService {
 
@@ -29,11 +26,11 @@ public class CommentService {
     public List<Comment> findAll() {
         return commentRepository.findAll();
     }
-
+    @Transactional
     public Comment create(Comment comment) {
         return commentRepository.save(comment);
     }
-
+    @Transactional
     public Comment update(Long id, Comment update) {
         return commentRepository.findById(id)
                 .map(existedComment -> {
@@ -42,7 +39,7 @@ public class CommentService {
                 })
                 .orElseThrow(() -> new EntityNotFoundException("comment not found"));
     }
-
+    @Transactional
     public void deleteById(Long id) {
         commentRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("comment not found"));
         commentRepository.deleteById(id);

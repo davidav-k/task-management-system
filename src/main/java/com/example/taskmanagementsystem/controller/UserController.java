@@ -24,7 +24,7 @@ public class UserController {
     private final UserToUserRsConverter userToUserRsConverter;
     private final UserRqToUserConverter userRqToUserConverter;
 
-
+//Todo converters to services
 
     @GetMapping("/{id}")
     public Result findById(@PathVariable Long id) {
