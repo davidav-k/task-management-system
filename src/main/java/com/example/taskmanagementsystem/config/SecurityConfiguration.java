@@ -1,5 +1,9 @@
-package com.example.taskmanagementsystem.security;
+package com.example.taskmanagementsystem.config;
 
+import com.example.taskmanagementsystem.security.CustomBasicAuthenticationEntryPoint;
+import com.example.taskmanagementsystem.security.CustomBearerTokenAccessDeniedHandler;
+import com.example.taskmanagementsystem.security.CustomBearerTokenAuthenticationEntryPoint;
+import com.example.taskmanagementsystem.security.UserRequestAuthorizationManager;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;

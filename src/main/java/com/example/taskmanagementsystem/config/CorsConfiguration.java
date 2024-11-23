@@ -1,4 +1,4 @@
-package com.example.taskmanagementsystem.security;
+package com.example.taskmanagementsystem.config;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Bean;
