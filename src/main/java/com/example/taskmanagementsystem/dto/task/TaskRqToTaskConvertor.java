@@ -13,14 +13,14 @@ public class TaskRqToTaskConvertor implements Converter<TaskRq, Task> {
     private final UserService userService;
 
     @Override
-    public Task convert(TaskRq source) {
+    public Task convert(TaskRq rq) {
         return Task.builder()
-                .title(source.title())
-                .description(source.description())
-                .status(source.status())
-                .priority(source.priority())
-                .author(userService.findById(source.authorId()))
-                .assignee(userService.findById(source.assigneeId()))
+                .title(rq.title())
+                .description(rq.description())
+                .status(rq.status())
+                .priority(rq.priority())
+                .author(userService.findByIdReturnUser(rq.authorId()))
+                .assignee(userService.findByIdReturnUser(rq.assigneeId()))
                 .build();
     }
 }

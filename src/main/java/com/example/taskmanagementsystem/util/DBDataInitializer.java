@@ -1,5 +1,6 @@
 package com.example.taskmanagementsystem.util;
 
+import com.example.taskmanagementsystem.dto.user.UserRq;
 import com.example.taskmanagementsystem.entity.*;
 import com.example.taskmanagementsystem.service.CommentService;
 import com.example.taskmanagementsystem.service.TaskService;
@@ -7,7 +8,6 @@ import com.example.taskmanagementsystem.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -22,27 +22,26 @@ public class DBDataInitializer implements CommandLineRunner {
     private final TaskService taskService;
     private final CommentService commentService;
 
-    private final PasswordEncoder passwordEncoder;
-
     @Override
     public void run(String... args) {
 
-        User admin = User.builder()
-                .username("admin")
-                .password(passwordEncoder.encode("admin"))
-                .email("admin@mail.com")
-                .roles(Set.of(RoleType.ROLE_ADMIN))
-                .enabled(true)
-                .build();
-        User user = User.builder()
-                .username("user")
-                .password(passwordEncoder.encode("user"))
-                .email("user@mail.com")
-                .roles(Set.of(RoleType.ROLE_USER))
-                .enabled(true)
-                .build();
-        admin = userService.create(admin);
-        user = userService.create(user);
+        UserRq adminRq = new UserRq(
+                "admin",
+                "admin@mail.com",
+                "Password123",
+                Set.of(RoleType.ROLE_ADMIN),
+                true);
+        UserRq userRq = new UserRq(
+                "user",
+                "user@mail.com",
+                "Password123",
+                Set.of(RoleType.ROLE_USER),
+                true);
+
+        userService.create(adminRq);
+        userService.create(userRq);
+        User admin = userService.findByIdReturnUser(1L);
+        User user = userService.findByIdReturnUser(2L);
 
         Task t1 = Task.builder()
                 .title("Task1")

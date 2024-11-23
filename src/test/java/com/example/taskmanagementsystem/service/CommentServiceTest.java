@@ -33,14 +33,6 @@ class CommentServiceTest {
 
     private final Comment comment = Comment.builder().id(1L).comment("Test comment").build();
 
-    @BeforeEach
-    void setUp() {
-    }
-
-    @AfterEach
-    void tearDown() {
-    }
-
     @Test
     void testFindByIdSuccess() {
 

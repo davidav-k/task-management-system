@@ -15,12 +15,12 @@ public class CommentRqToCommentConverter implements Converter<CommentRq, Comment
     private final UserService userService;
 
     @Override
-    public Comment convert(CommentRq source) {
+    public Comment convert(CommentRq rq) {
 
         return Comment.builder()
-                .comment(source.comment())
-                .author(userService.findById(source.authorId()))
-                .task(taskService.findById(source.taskId()))
+                .comment(rq.comment())
+                .author(userService.findByIdReturnUser(rq.authorId()))
+                .task(taskService.findById(rq.taskId()))
                 .build();
     }
 }

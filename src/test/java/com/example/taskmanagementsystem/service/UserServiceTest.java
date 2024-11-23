@@ -1,6 +1,7 @@
 package com.example.taskmanagementsystem.service;
 
 import com.example.taskmanagementsystem.client.rediscache.RedisCacheClient;
+import com.example.taskmanagementsystem.dto.user.UserRs;
 import com.example.taskmanagementsystem.entity.RoleType;
 import com.example.taskmanagementsystem.entity.User;
 import com.example.taskmanagementsystem.exception.PasswordChangeIllegalArgumentException;
@@ -40,15 +41,25 @@ public class UserServiceTest {
     private UserRepository userRepository;
     @InjectMocks
     private UserService userService;
-    private final User user = User.builder().id(1L).username("user").email("user@mail.com")
-            .password("user").roles(Set.of(RoleType.ROLE_ADMIN)).build();
+
+
+    private final User user = User.builder()
+            .id(1L)
+            .username("user")
+            .email("user@mail.com")
+            .password("user")
+            .roles(Set.of(RoleType.ROLE_ADMIN))
+            .enabled(true)
+            .build();
+
+
 
     @Test
-    public void testFindByIdSuccess() {
+    public void testFindByIdReturnUserSuccess() {
 
         given(userRepository.findById(1L)).willReturn(Optional.of(user));
 
-        User returnedUser = userService.findById(1L);
+        User returnedUser = userService.findByIdReturnUser(1L);
 
         assertThat(returnedUser.getId()).isEqualTo(1L);
         assertThat(returnedUser.getUsername()).isEqualTo("user");
@@ -71,12 +82,12 @@ public class UserServiceTest {
     @Test
     public void testFindAll() {
         User user1 = User.builder().id(2L).username("user1").build();
-        List<User> users = List.of(user, user1);
+        List<UserRs> users = List.of(, user1);
         given(userRepository.findAll()).willReturn(users);
 
-        List<User> returnedUsers = userService.findAll();
+        List<UserRs> returnedUsers = userService.findAll();
 
-        assertThat(returnedUsers.get(0).getId()).isEqualTo(1L);
+        assertThat(returnedUsers.get(0).id().isEqualTo(1L);
         assertThat(returnedUsers.get(0).getUsername()).isEqualTo("user");
         assertThat(returnedUsers.get(1).getId()).isEqualTo(2L);
         assertThat(returnedUsers.get(1).getUsername()).isEqualTo("user1");

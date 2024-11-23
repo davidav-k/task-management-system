@@ -135,7 +135,7 @@ public class UserControllerIntegrationTest {
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testCreateByAdminSuccess() throws Exception {
-        UserRq rq = new UserRq("user1", "user1@mail.com", "user1", Set.of(RoleType.ROLE_USER));
+        UserRq rq = new UserRq("user1", "user1@mail.com", "user1", Set.of(RoleType.ROLE_USER), true);
 
         mockMvc.perform(post(baseUrl + "/user")
                         .accept(MediaType.APPLICATION_JSON)
@@ -160,7 +160,7 @@ public class UserControllerIntegrationTest {
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testCreateByAdminWrongDataFail() throws Exception {
-        UserRq fakeRq = new UserRq("", "use", "", null);
+        UserRq fakeRq = new UserRq("", "use", "", null, true);
 
         mockMvc.perform(
                         post(baseUrl + "/user")
@@ -184,7 +184,7 @@ public class UserControllerIntegrationTest {
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testUpdateByAdminOnwInfoSuccess() throws Exception {
 
-        UserRq rq = new UserRq("adminUp", "admin@mail.com", "admin", Set.of(RoleType.ROLE_ADMIN));
+        UserRq rq = new UserRq("adminUp", "admin@mail.com", "admin", Set.of(RoleType.ROLE_ADMIN), true);
 
         this.mockMvc.perform(put(baseUrl + "/user/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -201,7 +201,7 @@ public class UserControllerIntegrationTest {
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testUpdateByAdminAnotherUserSuccess() throws Exception {
 
-        UserRq rq = new UserRq("userUp", "userUp@mail.com", "userUp", Set.of(RoleType.ROLE_USER));
+        UserRq rq = new UserRq("userUp", "userUp@mail.com", "userUp", Set.of(RoleType.ROLE_USER), true);
 
         this.mockMvc.perform(put(baseUrl + "/user/2")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -218,7 +218,7 @@ public class UserControllerIntegrationTest {
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testUpdateByUserOwnInfoSuccess() throws Exception {
 
-        UserRq rq = new UserRq("userUp", "userUp@mail.com", "user", Set.of(RoleType.ROLE_USER));
+        UserRq rq = new UserRq("userUp", "userUp@mail.com", "user", Set.of(RoleType.ROLE_USER), true);
 
         this.mockMvc.perform(put(baseUrl + "/user/2")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -246,7 +246,7 @@ public class UserControllerIntegrationTest {
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testUpdateWrongDataFail() throws Exception {
 
-        UserRq rq = new UserRq("", "", "", Set.of());
+        UserRq rq = new UserRq("", "", "", Set.of(), true);
 
         this.mockMvc.perform(put(baseUrl + "/user/2")
                         .contentType(MediaType.APPLICATION_JSON)

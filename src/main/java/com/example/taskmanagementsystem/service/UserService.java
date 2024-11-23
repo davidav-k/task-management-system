@@ -143,29 +143,28 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public void changePassword(Long userId, @NotNull PasswordRq rq) {
-
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException(
                 MessageFormatter.format("User with id {} not found", userId).getMessage()));
-
         if (!passwordEncoder.matches(rq.getOldPassword(), user.getPassword())) {
             throw new BadCredentialsException("Old password is incorrect");
         }
-
         if (!rq.getNewPassword().equals(rq.getConfirmNewPassword())) {
             throw new PasswordChangeIllegalArgumentException("New password and confirm new password do not match");
         }
-
         //The new password must contain at least one digit, one lowercase letter, one uppercase letter, and be at least 8 characters long.
         String passwordPolicy = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$";
         if (!rq.getNewPassword().matches(passwordPolicy)) {
             throw new PasswordChangeIllegalArgumentException("New password does not conform to password policy");
         }
-
         user.setPassword(passwordEncoder.encode(rq.getNewPassword()));
-
         redisCacheClient.delete("whitelist:" + userId);
-
         userRepository.save(user);
-
     }
+
+    public User findByIdReturnUser(Long id) {
+        return userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(
+                MessageFormatter.format("User with id {} not found", id).getMessage()));
+    }
+
+
 }

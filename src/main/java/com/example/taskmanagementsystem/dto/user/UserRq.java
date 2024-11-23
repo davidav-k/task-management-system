@@ -17,5 +17,6 @@ public record UserRq(
                 message = "Password must contain at least one digit, one lowercase letter, one uppercase letter, and be at least 8 characters long")
         String password,
         @NotEmpty(message = "RoleType must not be null")
-        Set<RoleType> roles) {
+        Set<RoleType> roles,
+        boolean enabled) {
 }

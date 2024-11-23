@@ -57,33 +57,34 @@ class UserControllerTest {
 
     private User admin;
     private User user;
-    private UserRq rq;
-    private UserRs rs;
+    private UserRq adminRq;
+    private UserRs adminRs;
 
     @BeforeEach
     void setUp() {
         admin = User.builder()
                 .id(1L)
                 .username("admin")
-                .password("admin")
-                .email("admin@admin.com")
+                .password("Password123")
+                .email("admin@mail.com")
                 .roles(Set.of(RoleType.ROLE_ADMIN))
                 .build();
         user = User.builder()
                 .id(2L)
                 .username("user")
-                .password("user")
-                .email("user@admin.com")
+                .password("Password123")
+                .email("user@mail.com")
                 .roles(Set.of(RoleType.ROLE_USER))
                 .build();
-        rs = new UserRs(1L,
+        adminRs = new UserRs(1L,
                 "admin",
-                "admin@admin.com",
+                "admin@mail.com",
                 Set.of(RoleType.ROLE_ADMIN));
-        rq = new UserRq("admin",
-                "admin@admin.com",
-                "admin",
-                Set.of(RoleType.ROLE_ADMIN));
+        adminRq = new UserRq("admin",
+                "admin@mail.com",
+                "Password123",
+                Set.of(RoleType.ROLE_ADMIN),
+                true);
     }
 
     @AfterEach
@@ -94,8 +95,8 @@ class UserControllerTest {
     @Test
     void findByIdSuccess() throws Exception {
 
-        given(userService.findById(1L)).willReturn(admin);
-        given(userToUserRsConverter.convert(admin)).willReturn(rs);
+        given(userService.findById(1L)).willReturn(adminRs);
+        given(userToUserRsConverter.convert(admin)).willReturn(adminRs);
 
         mockMvc.perform(get(baseUrl + "/user/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.timestamp").value(any(String.class)))
@@ -104,7 +105,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.message").value("Found one"))
                 .andExpect(jsonPath("$.data.id").value(1L))
                 .andExpect(jsonPath("$.data.username").value("admin"))
-                .andExpect(jsonPath("$.data.email").value("admin@admin.com"))
+                .andExpect(jsonPath("$.data.email").value("admin@mail.com"))
                 .andExpect(jsonPath("$.data.roles").value("ROLE_ADMIN"))
                 .andExpect(jsonPath("$.data.password").doesNotExist());
     }
@@ -123,9 +124,13 @@ class UserControllerTest {
     @Test
     void findAllSuccess() throws Exception {
 
-        List<User> users = List.of(admin, user);
-        given(userService.findAll()).willReturn(users);
-        given(userToUserRsConverter.convert(ArgumentMatchers.any(User.class))).willReturn(rs);
+        UserRs userRs = new UserRs(1L,
+                "user",
+                "user@mail.com",
+                Set.of(RoleType.ROLE_USER));
+        List<UserRs> userRsList = List.of(adminRs, userRs);
+        given(userService.findAll()).willReturn(userRsList);
+        given(userToUserRsConverter.convert(ArgumentMatchers.any(User.class))).willReturn(adminRs);
 
         mockMvc.perform(get(baseUrl + "/user").accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
@@ -141,14 +146,14 @@ class UserControllerTest {
     @Test
     void testCreateSuccess() throws Exception {
 
-        given(userRqToUserConverter.convert(rq)).willReturn(admin);
-        given(userService.create(admin)).willReturn(admin);
-        given(userToUserRsConverter.convert(admin)).willReturn(rs);
+        given(userRqToUserConverter.convert(adminRq)).willReturn(admin);
+        given(userService.create(adminRq)).willReturn(adminRs);
+        given(userToUserRsConverter.convert(admin)).willReturn(adminRs);
 
         mockMvc.perform(
                         post(baseUrl + "/user")
                                 .accept(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(rq))
+                                .content(objectMapper.writeValueAsString(adminRq))
                                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.timestamp").value(any(String.class)))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -156,7 +161,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.message").value("User created"))
                 .andExpect(jsonPath("$.data").exists())
                 .andExpect(jsonPath("$.data.username").value("admin"))
-                .andExpect(jsonPath("$.data.email").value("admin@admin.com"))
+                .andExpect(jsonPath("$.data.email").value("admin@mail.com"))
                 .andExpect(jsonPath("$.data.roles").value("ROLE_ADMIN"))
                 .andExpect(jsonPath("$.data.password").doesNotExist());
     }
@@ -164,7 +169,7 @@ class UserControllerTest {
     @Test
     void testCreateFail() throws Exception {
 
-        UserRq fakeRq = new UserRq("","admin","", null);
+        UserRq fakeRq = new UserRq("","admin","", null, true);
 
         mockMvc.perform(
                         post(baseUrl + "/user")
@@ -185,9 +190,9 @@ class UserControllerTest {
     @Test
     void testUpdateSuccess() throws Exception {
         UserRs userRs = new UserRs(1L,"userUp", "userUp@mail.com", Set.of(RoleType.ROLE_USER));
-        UserRq rq = new UserRq("userUp", "userUp@mail.com","userUp", Set.of(RoleType.ROLE_USER));
+        UserRq rq = new UserRq("userUp", "userUp@mail.com","userUp", Set.of(RoleType.ROLE_USER), true);
         given(userRqToUserConverter.convert(rq)).willReturn(user);
-        given(userService.update(1L, user)).willReturn(user);
+        given(userService.update(1L, rq)).willReturn(userRs);
         given(userToUserRsConverter.convert(user)).willReturn(userRs);
 
         this.mockMvc.perform(put(baseUrl + "/user/1")
@@ -203,7 +208,7 @@ class UserControllerTest {
     @Test
     void testUpdateFail() throws Exception {
 
-        UserRq rq = new UserRq("", "","", Set.of());
+        UserRq rq = new UserRq("", "","", Set.of(), true);
 
         this.mockMvc.perform(put(baseUrl + "/user/1")
                         .contentType(MediaType.APPLICATION_JSON)
