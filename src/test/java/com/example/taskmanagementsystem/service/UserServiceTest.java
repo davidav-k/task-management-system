@@ -1,243 +1,342 @@
 package com.example.taskmanagementsystem.service;
 
 import com.example.taskmanagementsystem.client.rediscache.RedisCacheClient;
-import com.example.taskmanagementsystem.dto.user.UserRs;
+import com.example.taskmanagementsystem.dto.user.*;
 import com.example.taskmanagementsystem.entity.RoleType;
 import com.example.taskmanagementsystem.entity.User;
 import com.example.taskmanagementsystem.exception.PasswordChangeIllegalArgumentException;
+import com.example.taskmanagementsystem.exception.UsernameAlreadyTakenException;
 import com.example.taskmanagementsystem.repo.UserRepository;
 import com.example.taskmanagementsystem.security.AppUserDetails;
+import com.example.taskmanagementsystem.security.JwtProvider;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles(value = "test")
 public class UserServiceTest {
     @Mock
-    PasswordEncoder passwordEncoder;
-    @Mock
-    RedisCacheClient redisCacheClient;
-    @Mock
     private UserRepository userRepository;
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    @Mock
+    private RedisCacheClient redisCacheClient;
+    @Mock
+    private JwtProvider jwtProvider;
+    @Mock
+    private UserToUserRsConverter userToUserRsConverter;
+    @Mock
+    private UserRqToUserConverter userRqToUserConverter;
+    @Mock
+    Authentication authentication;
+    @Mock
+    AppUserDetails appUserDetails;
     @InjectMocks
     private UserService userService;
 
-
-    private final User user = User.builder()
-            .id(1L)
-            .username("user")
-            .email("user@mail.com")
-            .password("user")
-            .roles(Set.of(RoleType.ROLE_ADMIN))
-            .enabled(true)
-            .build();
-
-
-
     @Test
-    public void testFindByIdReturnUserSuccess() {
+    void createLoginInfo_ShouldReturnLoginInfo() {
+        User user = new User();
+        UserRs userRs = new UserRs(1L,
+                "admin",
+                "admin@mail.com",
+                Set.of(RoleType.ROLE_ADMIN));
+        String token = "mockToken";
 
-        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        Mockito.when(authentication.getPrincipal()).thenReturn(appUserDetails);
+        Mockito.when(appUserDetails.getUser()).thenReturn(user);
+        Mockito.when(userToUserRsConverter.convert(user)).thenReturn(userRs);
+        Mockito.when(jwtProvider.createToken(authentication)).thenReturn(token);
 
-        User returnedUser = userService.findByIdReturnUser(1L);
+        Map<String, Object> result = userService.createLoginInfo(authentication);
 
-        assertThat(returnedUser.getId()).isEqualTo(1L);
-        assertThat(returnedUser.getUsername()).isEqualTo("user");
-        verify(userRepository, times(1)).findById(1L);
+        assertNotNull(result);
+        assertEquals(userRs, result.get("userInfo"));
+        assertEquals(token, result.get("token"));
+        Mockito.verify(redisCacheClient).set(Mockito.eq("whitelist:" + userRs.id()), Mockito.eq(token), Mockito.eq(2L), Mockito.eq(TimeUnit.HOURS));
     }
 
     @Test
-    public void testFindByIdFail() {
+    void findById_ShouldReturnUser() {
+        Long id = 1L;
+        User user = new User();
+        UserRs userRs = new UserRs(1L,
+                "admin",
+                "admin@mail.com",
+                Set.of(RoleType.ROLE_ADMIN));
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
 
-        given(userRepository.findById(1L)).willReturn(Optional.empty());
+        User result = userService.findById(id);
 
-        Throwable thrown = catchThrowable(() -> userService.findById(1L));
-
-        assertThat(thrown).isInstanceOf(EntityNotFoundException.class)
-                .hasMessage("User with id 1 not found");
-        verify(userRepository, times(1)).findById(1L);
-
+        assertEquals(user, result);
     }
 
     @Test
-    public void testFindAll() {
-        User user1 = User.builder().id(2L).username("user1").build();
-        List<UserRs> users = List.of(, user1);
-        given(userRepository.findAll()).willReturn(users);
+    void findById_ShouldThrowException_WhenUserNotFound() {
+        Long id = 1L;
+        when(userRepository.findById(id)).thenReturn(Optional.empty());
 
-        List<UserRs> returnedUsers = userService.findAll();
-
-        assertThat(returnedUsers.get(0).id().isEqualTo(1L);
-        assertThat(returnedUsers.get(0).getUsername()).isEqualTo("user");
-        assertThat(returnedUsers.get(1).getId()).isEqualTo(2L);
-        assertThat(returnedUsers.get(1).getUsername()).isEqualTo("user1");
-
-        verify(userRepository, times(1)).findAll();
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> userService.findById(id));
+        assertEquals("User with id 1 not found", exception.getMessage());
     }
 
     @Test
-    public void testCreateUser() {
-        given(userRepository.save(user)).willReturn(user);
+    void create_ShouldSaveUser() {
+        UserRq rq = new UserRq("testUser",
+                "testEmail",
+                "Password123",
+                Set.of(RoleType.ROLE_ADMIN),
+                true);
+        UserRs rs = new UserRs(1L,
+                "admin",
+                "admin@mail.com",
+                Set.of(RoleType.ROLE_ADMIN));
+        User user = new User();
+        User savedUser = new User();
 
-        User savedUser = userService.create(user);
+        when(userRqToUserConverter.convert(rq)).thenReturn(user);
+        when(userRepository.save(user)).thenReturn(savedUser);
+        when(userToUserRsConverter.convert(savedUser)).thenReturn(rs);
 
-        assertThat(savedUser.getId()).isEqualTo(1L);
-        assertThat(savedUser.getUsername()).isEqualTo("user");
-        verify(userRepository, times(1)).save(user);
+        UserRs result = userService.create(rq);
+
+        assertEquals(rs, result);
+        verify(userRepository).save(user);
     }
 
     @Test
-    public void testUpdateByAdminSuccess() {
-        User update = User.builder().id(1L).username("UserUpdate").email("userUp@mail.com").build();
+    void update_ShouldUpdateUser_WhenUserIsAdmin() {
 
-        given(userRepository.findById(1L)).willReturn(Optional.of(user));
-        given(userRepository.save(user)).willReturn(update);
+        Long userId = 1L;
+        UserRq rq = new UserRq("testUser",
+                "testEmail",
+                "Password123",
+                Set.of(RoleType.ROLE_ADMIN),
+                true);
+        User updateUser = User.builder()
+                .username("newUsername")
+                .email("newEmail@mail.com")
+                .roles(Set.of(RoleType.ROLE_ADMIN))
+                .enabled(true)
+                .build();
+        User existingUser = User.builder()
+                .username("oldUsername")
+                .email("oldEmail@example.com")
+                .build();
+        User updatedUser = new User();
+        UserRs rs = new UserRs(1L,
+                "admin",
+                "admin@mail.com",
+                Set.of(RoleType.ROLE_ADMIN));
 
-        AppUserDetails appUserDetails = new AppUserDetails(user);
-        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(new UsernamePasswordAuthenticationToken(
-                appUserDetails, null, appUserDetails.getAuthorities()));
-        SecurityContextHolder.setContext(securityContext);
+        when(userRqToUserConverter.convert(rq)).thenReturn(updateUser);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
+        when(userRepository.save(existingUser)).thenReturn(updatedUser);
+        when(userToUserRsConverter.convert(updatedUser)).thenReturn(rs);
+        when(authentication.getAuthorities())
+                .thenReturn((Collection) Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN")));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        User savedUser = userService.update(1L, update);
+        UserRs result = userService.update(userId, rq);
 
-        assertThat(savedUser.getId()).isEqualTo(1L);
-        assertThat(savedUser.getUsername()).isEqualTo("UserUpdate");
-        assertThat(savedUser.getEmail()).isEqualTo("userUp@mail.com");
-        verify(userRepository, times(1)).findById(1L);
-        verify(userRepository, times(1)).save(user);
+        assertEquals(rs, result);
+        assertEquals("newUsername", existingUser.getUsername());
+        assertEquals("newEmail@mail.com", existingUser.getEmail());
+        assertEquals(Set.of(RoleType.ROLE_ADMIN), existingUser.getRoles());
     }
 
     @Test
-    public void testUpdateByUserOnlyUpdateUserNameSuccess() {
-        User update = User.builder().id(1L).username("UserUpdate").email("userUp@mail.com").build();
-        given(userRepository.findById(1L)).willReturn(Optional.of(user));
-        given(userRepository.save(user)).willReturn(user);
+    void update_ShouldThrowException_WhenUserNotFound() {
 
-        user.setRoles(Set.of(RoleType.ROLE_USER));
-        AppUserDetails appUserDetails = new AppUserDetails(user);
-        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(new UsernamePasswordAuthenticationToken(
-                appUserDetails, null, appUserDetails.getAuthorities()));
-        SecurityContextHolder.setContext(securityContext);
+        Long userId = 1L;
+        UserRq rq = new UserRq("testUser",
+                "testEmail",
+                "Password123",
+                Set.of(RoleType.ROLE_ADMIN),
+                true);
+        when(userRqToUserConverter.convert(rq)).thenReturn(new User());
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        User savedUser = userService.update(1L, update);
-
-        assertThat(savedUser.getId()).isEqualTo(1L);
-        assertThat(savedUser.getUsername()).isEqualTo("UserUpdate");
-        assertThat(savedUser.getEmail()).isEqualTo("user@mail.com");
-        verify(userRepository, times(1)).findById(1L);
-        verify(userRepository, times(1)).save(user);
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> userService.update(userId, rq));
+        assertEquals("User with id 1 not found", exception.getMessage());
     }
 
     @Test
-    public void testUpdateUserNotFoundFail() {
+    void update_ShouldThrowException_WhenConversionFails() {
 
-        User update = User.builder().id(1L).username("UserUpdate").build();
-        given(userRepository.findById(1L)).willReturn(Optional.empty());
+        Long userId = 1L;
+        UserRq rq = new UserRq("testUser",
+                "testEmail",
+                "Password123",
+                Set.of(RoleType.ROLE_ADMIN),
+                true);
 
-        assertThrows(EntityNotFoundException.class, () -> {
-            userService.update(1L, update);
-        });
+        Mockito.when(userRqToUserConverter.convert(rq)).thenReturn(null);
 
-        verify(userRepository, times(1)).findById(1L);
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.update(userId, rq));
+        assertEquals("Conversion failed user testUser", exception.getMessage());
     }
 
     @Test
-    void testDeleteByIdSuccess() {
+    void update_ShouldThrowException_WhenUsernameIsTaken() {
 
-        given(userRepository.findById(1L)).willReturn(Optional.of(user));
-        doNothing().when(userRepository).deleteById(1L);
+        Long userId = 1L;
+        UserRq rq = new UserRq("testUser",
+                "testEmail",
+                "Password123",
+                Set.of(RoleType.ROLE_ADMIN),
+                true);
+        User updateUser = new User();
+        updateUser.setUsername("takenUsername");
 
-        userService.deleteById(1L);
+        User existingUser = new User();
+        existingUser.setUsername("oldUsername");
 
-        verify(userRepository, times(1)).deleteById(1L);
+        Mockito.when(userRqToUserConverter.convert(rq)).thenReturn(updateUser);
+        Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
+        Mockito.when(userRepository.existsByUsername("takenUsername")).thenReturn(true);
+
+        UsernameAlreadyTakenException exception = assertThrows(UsernameAlreadyTakenException.class,
+                () -> userService.update(userId, rq));
+        assertEquals("Username takenUsername is already taken", exception.getMessage());
     }
 
     @Test
-    void testDeleteByIdFail() {
+    void update_ShouldUpdateUsername_WhenUserIsNotAdmin() {
 
-        given(userRepository.findById(2L)).willReturn(Optional.empty());
+        Long userId = 1L;
+        UserRq rq = new UserRq("testUser",
+                "testEmail",
+                "Password123",
+                Set.of(RoleType.ROLE_ADMIN),
+                true);
+        User updateUser = new User();
+        updateUser.setUsername("newUsername");
 
-        assertThrows(EntityNotFoundException.class, () -> userService.deleteById(2L));
+        User existingUser = new User();
+        existingUser.setUsername("oldUsername");
+        existingUser.setEmail("oldEmail@example.com");
+        User updatedUser = new User();
+        updatedUser.setUsername("newUsername");
+        UserRs rs = new UserRs(1L,
+                "admin",
+                "admin@mail.com",
+                Set.of(RoleType.ROLE_ADMIN));
 
-        verify(userRepository, times(1)).findById(2L);
+        Mockito.when(userRqToUserConverter.convert(rq)).thenReturn(updateUser);
+        Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
+        Mockito.when(userRepository.save(existingUser)).thenReturn(updatedUser);
+        Mockito.when(userToUserRsConverter.convert(updatedUser)).thenReturn(rs);
+        when(authentication.getAuthorities())
+                .thenReturn((Collection) Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN")));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        UserRs result = userService.update(userId, rq);
+
+        assertEquals(rs, result);
+        assertEquals("newUsername", existingUser.getUsername());
     }
 
     @Test
-    void testChangePasswordSuccess(){
+    void deleteById_ShouldDeleteUser() {
+        Long userId = 1L;
+        User user = new User();
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        given(userRepository.findById(1L)).willReturn(Optional.of(user));
-        given(passwordEncoder.matches(anyString(),anyString())).willReturn(true);
-        given(passwordEncoder.encode(anyString())).willReturn("1newUser");
-        given(userRepository.save(user)).willReturn(user);
-        doNothing().when(redisCacheClient).delete(anyString());
+        userService.deleteById(userId);
 
-        userService.changePassword(1L, "user", "1newUser", "1newUser");
-
-        assertThat(user.getPassword()).isEqualTo("1newUser");
-        verify(userRepository, times(1)).save(user);
+        verify(userRepository).deleteById(userId);
     }
 
     @Test
-    void testChangePasswordOldPasswordIsIncorrect(){
-        given(userRepository.findById(1L)).willReturn(Optional.of(user));
-        given(passwordEncoder.matches(anyString(),anyString())).willReturn(false);
-        Exception exception = assertThrows(BadCredentialsException.class, () -> {
-            userService.changePassword(1L, "bad", "1newUser", "1newUser");
-        });
+    void changePassword_ShouldChangePasswordSuccess() {
 
-        assertThat(exception).isInstanceOf(BadCredentialsException.class).hasMessage("Old password is incorrect");
+        Long userId = 1L;
+        PasswordRq passwordRq = new PasswordRq("oldPassword123", "NewPassword123", "NewPassword123");
+        User user = User.builder().password("encodedOldPassword").build();
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("oldPassword123", "encodedOldPassword")).thenReturn(true);
+        when(passwordEncoder.encode("NewPassword123")).thenReturn("encodedNewPassword");
 
-          }
+        userService.changePassword(userId, passwordRq);
 
-    @Test
-    void testChangePasswordNewPasswordDoesNotMatchConfirmNewPassword(){
-
-        given(userRepository.findById(1L)).willReturn(Optional.of(user));
-        given(passwordEncoder.matches(anyString(),anyString())).willReturn(true);
-
-
-        Exception exception = assertThrows(PasswordChangeIllegalArgumentException.class, () -> {
-            userService.changePassword(1L, "user", "1newUser", "2newUser");
-        });
-
-        assertThat(exception).isInstanceOf(PasswordChangeIllegalArgumentException.class).hasMessage("New password and confirm new password do not match");
-
+        verify(userRepository).save(user);
+        verify(redisCacheClient).delete("whitelist:" + userId);
+        assertEquals("encodedNewPassword", user.getPassword());
     }
 
     @Test
-    void testChangePasswordNewPasswordDoesNotConformToPolicy(){
-        given(userRepository.findById(1L)).willReturn(Optional.of(user));
-        given(passwordEncoder.matches(anyString(),anyString())).willReturn(true);
+    void changePassword_ShouldThrowException_WhenOldPasswordDoesNotMatch() {
+        Long userId = 1L;
+        PasswordRq passwordRq = new PasswordRq("wrongOldPassword", "NewPassword123", "NewPassword123");
+        User user = User.builder().password("encodedOldPassword").build();
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrongOldPassword", "encodedOldPassword")).thenReturn(false);
 
-
-        Exception exception = assertThrows(PasswordChangeIllegalArgumentException.class, () -> {
-            userService.changePassword(1L, "user", "newUser", "newUser");
-        });
-
-        assertThat(exception).isInstanceOf(PasswordChangeIllegalArgumentException.class).hasMessage("New password does not conform to password policy");
-
+        BadCredentialsException exception = assertThrows(BadCredentialsException.class,
+                () -> userService.changePassword(userId, passwordRq));
+        assertEquals("Old password is incorrect", exception.getMessage());
     }
+
+    @Test
+    void changePassword_ShouldThrowException_WhenNewPasswordAndConfirmationDoNotMatch() {
+        Long userId = 1L;
+        PasswordRq passwordRq = new PasswordRq("oldPassword123", "NewPassword123", "MismatchPassword");
+        User user = User.builder().password("encodedOldPassword").build();
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("oldPassword123", "encodedOldPassword")).thenReturn(true);
+
+        PasswordChangeIllegalArgumentException exception = assertThrows(PasswordChangeIllegalArgumentException.class,
+                () -> userService.changePassword(userId, passwordRq));
+        assertEquals("New password and confirm new password do not match", exception.getMessage());
+    }
+
+    @Test
+    void changePassword_ShouldThrowException_WhenNewPasswordViolatesPolicy() {
+        Long userId = 1L;
+        PasswordRq passwordRq = new PasswordRq("oldPassword123", "weakpass", "weakpass");
+        User user = User.builder().password("encodedOldPassword").build();
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("oldPassword123", "encodedOldPassword")).thenReturn(true);
+
+        PasswordChangeIllegalArgumentException exception = assertThrows(PasswordChangeIllegalArgumentException.class,
+                () -> userService.changePassword(userId, passwordRq));
+        assertEquals("New password does not conform to password policy", exception.getMessage());
+    }
+
+    @Test
+    void changePassword_ShouldThrowException_WhenUserNotFound() {
+        Long userId = 1L;
+        PasswordRq passwordRq = new PasswordRq("oldPassword123", "NewPassword123", "NewPassword123");
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> userService.changePassword(userId, passwordRq));
+        assertEquals("User with id 1 not found", exception.getMessage());
+    }
+
+
 
 }

@@ -19,7 +19,7 @@ public class CommentRqToCommentConverter implements Converter<CommentRq, Comment
 
         return Comment.builder()
                 .comment(rq.comment())
-                .author(userService.findByIdReturnUser(rq.authorId()))
+                .author(userService.findById(rq.authorId()))
                 .task(taskService.findById(rq.taskId()))
                 .build();
     }

@@ -1,35 +1,36 @@
 package com.example.taskmanagementsystem.controller;
 
 import com.example.taskmanagementsystem.dto.StatusCode;
-import com.example.taskmanagementsystem.dto.user.UserRq;
-import com.example.taskmanagementsystem.dto.user.UserRqToUserConverter;
-import com.example.taskmanagementsystem.dto.user.UserRs;
-import com.example.taskmanagementsystem.dto.user.UserToUserRsConverter;
+import com.example.taskmanagementsystem.dto.user.*;
 import com.example.taskmanagementsystem.entity.RoleType;
 import com.example.taskmanagementsystem.entity.User;
 import com.example.taskmanagementsystem.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import static org.hamcrest.Matchers.any;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -46,11 +47,12 @@ class UserControllerTest {
     ObjectMapper objectMapper;
     @MockBean
     UserService userService;
-
     @MockBean
     UserRqToUserConverter userRqToUserConverter;
     @MockBean
     UserToUserRsConverter userToUserRsConverter;
+    @MockBean
+    Authentication authentication;
 
     @Value("${api.endpoint.base-url}")
     String baseUrl;
@@ -87,22 +89,41 @@ class UserControllerTest {
                 true);
     }
 
-    @AfterEach
-    void tearDown() {
+    @Test
+    void getLoginInfo_ShouldReturnUserInfoAndToken() throws Exception {
+        Map<String, Object> loginInfo = new HashMap<>();
+        loginInfo.put("userInfo", new UserRs(1L, "testUser", "test@mail.com", Set.of(RoleType.ROLE_USER)));
+        loginInfo.put("token", "jwtToken");
+
+        given(authentication.getName()).willReturn("testUser");
+        given(userService.createLoginInfo(authentication)).willReturn(loginInfo);
+
+        mockMvc.perform(
+                        post(baseUrl + "/user/login")
+                                .accept(MediaType.APPLICATION_JSON)
+                                .principal(authentication))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("User info and token"))
+                .andExpect(jsonPath("$.data.userInfo.username").value("testUser"))
+                .andExpect(jsonPath("$.data.userInfo.email").value("test@mail.com"))
+                .andExpect(jsonPath("$.data.userInfo.roles[0]").value("ROLE_USER"))
+                .andExpect(jsonPath("$.data.token").value("jwtToken"));
+
+        verify(userService, times(1)).createLoginInfo(authentication);
     }
 
-
     @Test
-    void findByIdSuccess() throws Exception {
+    void findById_ShouldReturnUserRs() throws Exception {
 
-        given(userService.findById(1L)).willReturn(adminRs);
+        given(userService.findByIdReturnUserRs(1L)).willReturn(adminRs);
         given(userToUserRsConverter.convert(admin)).willReturn(adminRs);
 
         mockMvc.perform(get(baseUrl + "/user/1").accept(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.timestamp").value(any(String.class)))
+                .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.message").value("Found one"))
+                .andExpect(jsonPath("$.message").value("Found one success"))
                 .andExpect(jsonPath("$.data.id").value(1L))
                 .andExpect(jsonPath("$.data.username").value("admin"))
                 .andExpect(jsonPath("$.data.email").value("admin@mail.com"))
@@ -111,8 +132,9 @@ class UserControllerTest {
     }
 
     @Test
-    void findByIdFail() throws Exception {
-        given(userService.findById(3L)).willThrow(new EntityNotFoundException("User with id 3 not found"));
+    void findById_ShouldThrowException_WhenUserNotFound() throws Exception {
+        given(userService.findByIdReturnUserRs(3L)).willThrow(
+                new EntityNotFoundException("User with id 3 not found"));
 
         mockMvc.perform(get(baseUrl + "/user/3").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -123,14 +145,13 @@ class UserControllerTest {
 
     @Test
     void findAllSuccess() throws Exception {
-
         UserRs userRs = new UserRs(1L,
                 "user",
                 "user@mail.com",
                 Set.of(RoleType.ROLE_USER));
         List<UserRs> userRsList = List.of(adminRs, userRs);
         given(userService.findAll()).willReturn(userRsList);
-        given(userToUserRsConverter.convert(ArgumentMatchers.any(User.class))).willReturn(adminRs);
+        given(userToUserRsConverter.convert(any(User.class))).willReturn(adminRs);
 
         mockMvc.perform(get(baseUrl + "/user").accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
@@ -140,11 +161,11 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.data").exists())
                 .andExpect(jsonPath("$.data.size()").value(2))
                 .andExpect(jsonPath("$.data[0].username").value("admin"))
-                .andExpect(jsonPath("$.data[1].username").value("admin"));
+                .andExpect(jsonPath("$.data[1].username").value("user"));
     }
 
     @Test
-    void testCreateSuccess() throws Exception {
+    void create_ShouldSaveUser() throws Exception {
 
         given(userRqToUserConverter.convert(adminRq)).willReturn(admin);
         given(userService.create(adminRq)).willReturn(adminRs);
@@ -155,10 +176,10 @@ class UserControllerTest {
                                 .accept(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(adminRq))
                                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.timestamp").value(any(String.class)))
+                .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.message").value("User created"))
+                .andExpect(jsonPath("$.message").value("User created successfully"))
                 .andExpect(jsonPath("$.data").exists())
                 .andExpect(jsonPath("$.data.username").value("admin"))
                 .andExpect(jsonPath("$.data.email").value("admin@mail.com"))
@@ -167,7 +188,7 @@ class UserControllerTest {
     }
 
     @Test
-    void testCreateFail() throws Exception {
+    void create_NotValidUserDataFail() throws Exception {
 
         UserRq fakeRq = new UserRq("","admin","", null, true);
 
@@ -176,21 +197,21 @@ class UserControllerTest {
                                 .accept(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(fakeRq))
                                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.timestamp").value(any(String.class)))
+                .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(StatusCode.INVALID_ARGUMENT))
                 .andExpect(jsonPath("$.message").value("Provided arguments are not valid"))
                 .andExpect(jsonPath("$.data").exists())
                 .andExpect(jsonPath("$.data.username").value("Username must be from 3 to 10 symbols"))
                 .andExpect(jsonPath("$.data.email").value("The email address must be in the format user@example.com"))
-                .andExpect(jsonPath("$.data.password").value("The password length must be from 4 no more than 255 characters."))
+                .andExpect(jsonPath("$.data.password").value("Password must contain at least one digit, one lowercase letter, one uppercase letter, and be at least 8 characters long"))
                 .andExpect(jsonPath("$.data.roles").value("RoleType must not be null"));
     }
 
     @Test
-    void testUpdateSuccess() throws Exception {
+    void update_ShouldUpdateUser() throws Exception {
         UserRs userRs = new UserRs(1L,"userUp", "userUp@mail.com", Set.of(RoleType.ROLE_USER));
-        UserRq rq = new UserRq("userUp", "userUp@mail.com","userUp", Set.of(RoleType.ROLE_USER), true);
+        UserRq rq = new UserRq("userUp", "userUp@mail.com","Password123", Set.of(RoleType.ROLE_USER), true);
         given(userRqToUserConverter.convert(rq)).willReturn(user);
         given(userService.update(1L, rq)).willReturn(userRs);
         given(userToUserRsConverter.convert(user)).willReturn(userRs);
@@ -206,7 +227,7 @@ class UserControllerTest {
     }
 
     @Test
-    void testUpdateFail() throws Exception {
+    void update_NotValidUserDataFail() throws Exception {
 
         UserRq rq = new UserRq("", "","", Set.of(), true);
 
@@ -219,13 +240,13 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.message").value("Provided arguments are not valid"))
                 .andExpect(jsonPath("$.data").exists())
                 .andExpect(jsonPath("$.data.username").value("Username must be from 3 to 10 symbols"))
-                .andExpect(jsonPath("$.data.password").value("The password length must be from 4 no more than 255 characters."))
+                .andExpect(jsonPath("$.data.password").value("Password must contain at least one digit, one lowercase letter, one uppercase letter, and be at least 8 characters long"))
                 .andExpect(jsonPath("$.data.email").value("Email address cannot be empty"))
                 .andExpect(jsonPath("$.data.roles").value("RoleType must not be null"));
     }
 
     @Test
-    void testDeleteByIdSuccess() throws Exception {
+    void deleteById_ShouldDeleteUser() throws Exception {
 
         doNothing().when(userService).deleteById(1L);
 
@@ -239,7 +260,7 @@ class UserControllerTest {
     }
 
     @Test
-    void testDeleteByIdFail() throws Exception {
+    void deleteById_ShouldThrowException_WhenUserNotFound() throws Exception {
 
         doThrow(new EntityNotFoundException("user not found")).when(userService).deleteById(1L);
 
@@ -250,5 +271,23 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.message").value("user not found"))
                 .andExpect(jsonPath("$.data").isEmpty());
 
+    }
+
+    @Test
+    void changePassword_ShouldUpdatePassword() throws Exception {
+        PasswordRq rq = new PasswordRq("Password123",
+                "Password12345",
+                "Password12345");
+        doNothing().when(userService).changePassword(1L, rq);
+
+        mockMvc.perform(
+                        patch(baseUrl + "/user/1/password")
+                                .accept(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(rq))
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("Change password success"));
     }
 }

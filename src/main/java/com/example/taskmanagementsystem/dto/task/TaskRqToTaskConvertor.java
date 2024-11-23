@@ -19,8 +19,8 @@ public class TaskRqToTaskConvertor implements Converter<TaskRq, Task> {
                 .description(rq.description())
                 .status(rq.status())
                 .priority(rq.priority())
-                .author(userService.findByIdReturnUser(rq.authorId()))
-                .assignee(userService.findByIdReturnUser(rq.assigneeId()))
+                .author(userService.findById(rq.authorId()))
+                .assignee(userService.findById(rq.assigneeId()))
                 .build();
     }
 }

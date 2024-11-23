@@ -40,8 +40,8 @@ public class DBDataInitializer implements CommandLineRunner {
 
         userService.create(adminRq);
         userService.create(userRq);
-        User admin = userService.findByIdReturnUser(1L);
-        User user = userService.findByIdReturnUser(2L);
+        User admin = userService.findById(1L);
+        User user = userService.findById(2L);
 
         Task t1 = Task.builder()
                 .title("Task1")

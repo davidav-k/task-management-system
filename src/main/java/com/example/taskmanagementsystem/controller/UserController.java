@@ -32,7 +32,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     public Result findById(@PathVariable Long id) {
-        UserRs rs = userService.findById(id);
+        UserRs rs = userService.findByIdReturnUserRs(id);
         return new Result(true, StatusCode.SUCCESS, "Found one success", rs);
     }
 
@@ -44,7 +44,7 @@ public class UserController {
     }
 
     @PostMapping
-    Result createUser(@Valid @RequestBody UserRq rq){
+    Result create(@Valid @RequestBody UserRq rq){
         UserRs rs = userService.create(rq);
         return new Result(true, StatusCode.SUCCESS, "User created successfully", rs);
     }

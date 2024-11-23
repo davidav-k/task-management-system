@@ -1,5 +1,6 @@
 package com.example.taskmanagementsystem.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,6 +18,7 @@ import java.time.Instant;
 
 @Setter
 @Getter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Result {
 
 

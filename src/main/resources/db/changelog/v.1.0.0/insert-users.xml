@@ -8,13 +8,13 @@
         <insert tableName="users">
             <column  name="username"  value="admin"/>
             <column  name="email"  value="admin@mail.com"/>
-            <column  name="password"  value="$2a$12$XXUA0Z85t0kjH09hgBTeP.FqXNg/SCstTOrp2m/Ocd7A9/ZSqPmnO"/>
+            <column  name="password"  value="$2a$12$bJGWinFC76II7.ygA6UdTOKMsPiysLlZ4rphV4n2KwaGwfSmq18wy"/>
             <column  name="enabled"  value="true"/>
         </insert>
         <insert tableName="users">
             <column  name="username"  value="user"/>
             <column  name="email"  value="user@mail.com"/>
-            <column  name="password"  value="$2a$12$kEkyhz7k8yRmgCR5Uxh2Iu3sZXLgTQQKGbeSENEcm4JnpL1Edqwt."/>
+            <column  name="password"  value="$2a$12$bJGWinFC76II7.ygA6UdTOKMsPiysLlZ4rphV4n2KwaGwfSmq18wy"/>
             <column  name="enabled"  value="true"/>
         </insert>
 

@@ -56,14 +56,14 @@ public class UserControllerIntegrationTest {
     @BeforeEach
     void setUp() throws Exception {
         ResultActions resultActionsAdmin = mockMvc.perform(post(baseUrl + "/user/login")
-                .with(httpBasic("admin", "admin")));
+                .with(httpBasic("admin", "Password123")));
         MvcResult mvcResultAdmin = resultActionsAdmin.andDo(print()).andReturn();
         String contentAsStringAdmin = mvcResultAdmin.getResponse().getContentAsString();
         JSONObject jsonAdmin = new JSONObject(contentAsStringAdmin);
         tokenAdmin = "Bearer " + jsonAdmin.getJSONObject("data").getString("token");
 
         ResultActions resultActionsUser = mockMvc.perform(post(baseUrl + "/user/login")
-                .with(httpBasic("user", "user")));
+                .with(httpBasic("user", "Password123")));
         MvcResult mvcResultUser = resultActionsUser.andDo(print()).andReturn();
         String contentAsStringUser = mvcResultUser.getResponse().getContentAsString();
         JSONObject jsonUser = new JSONObject(contentAsStringUser);
@@ -78,7 +78,7 @@ public class UserControllerIntegrationTest {
                         .header("Authorization", tokenAdmin))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
-                .andExpect(jsonPath("$.message").value("Found one"))
+                .andExpect(jsonPath("$.message").value("Found one success"))
                 .andExpect(jsonPath("$.data").exists())
                 .andExpect(jsonPath("$.data.username").value("admin"));
     }
@@ -91,7 +91,7 @@ public class UserControllerIntegrationTest {
                         .header("Authorization", tokenAdmin))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
-                .andExpect(jsonPath("$.message").value("Found one"))
+                .andExpect(jsonPath("$.message").value("Found one success"))
                 .andExpect(jsonPath("$.data").exists())
                 .andExpect(jsonPath("$.data.username").value("user"));
     }
@@ -104,7 +104,7 @@ public class UserControllerIntegrationTest {
                         .header("Authorization", tokenUser))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
-                .andExpect(jsonPath("$.message").value("Found one"))
+                .andExpect(jsonPath("$.message").value("Found one success"))
                 .andExpect(jsonPath("$.data").exists())
                 .andExpect(jsonPath("$.data.username").value("user"));
     }
@@ -135,7 +135,7 @@ public class UserControllerIntegrationTest {
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testCreateByAdminSuccess() throws Exception {
-        UserRq rq = new UserRq("user1", "user1@mail.com", "user1", Set.of(RoleType.ROLE_USER), true);
+        UserRq rq = new UserRq("user1", "user1@mail.com", "Password123", Set.of(RoleType.ROLE_USER), true);
 
         mockMvc.perform(post(baseUrl + "/user")
                         .accept(MediaType.APPLICATION_JSON)
@@ -145,7 +145,7 @@ public class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.timestamp").value(any(String.class)))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.message").value("User created"))
+                .andExpect(jsonPath("$.message").value("User created successfully"))
                 .andExpect(jsonPath("$.data").exists())
                 .andExpect(jsonPath("$.data.username").value("user1"))
                 .andExpect(jsonPath("$.data.email").value("user1@mail.com"))
@@ -175,7 +175,7 @@ public class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.data").exists())
                 .andExpect(jsonPath("$.data.username").value("Username must be from 3 to 10 symbols"))
                 .andExpect(jsonPath("$.data.email").value("The email address must be in the format user@example.com"))
-                .andExpect(jsonPath("$.data.password").value("The password length must be from 4 no more than 255 characters."))
+                .andExpect(jsonPath("$.data.password").value("Password must contain at least one digit, one lowercase letter, one uppercase letter, and be at least 8 characters long"))
                 .andExpect(jsonPath("$.data.roles").value("RoleType must not be null"));
 
     }
@@ -184,7 +184,7 @@ public class UserControllerIntegrationTest {
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testUpdateByAdminOnwInfoSuccess() throws Exception {
 
-        UserRq rq = new UserRq("adminUp", "admin@mail.com", "admin", Set.of(RoleType.ROLE_ADMIN), true);
+        UserRq rq = new UserRq("adminUp", "admin@mail.com", "Password123", Set.of(RoleType.ROLE_ADMIN), true);
 
         this.mockMvc.perform(put(baseUrl + "/user/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -201,7 +201,7 @@ public class UserControllerIntegrationTest {
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testUpdateByAdminAnotherUserSuccess() throws Exception {
 
-        UserRq rq = new UserRq("userUp", "userUp@mail.com", "userUp", Set.of(RoleType.ROLE_USER), true);
+        UserRq rq = new UserRq("userUp", "userUp@mail.com", "Password123", Set.of(RoleType.ROLE_USER), true);
 
         this.mockMvc.perform(put(baseUrl + "/user/2")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -218,7 +218,7 @@ public class UserControllerIntegrationTest {
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testUpdateByUserOwnInfoSuccess() throws Exception {
 
-        UserRq rq = new UserRq("userUp", "userUp@mail.com", "user", Set.of(RoleType.ROLE_USER), true);
+        UserRq rq = new UserRq("userUp", "userUp@mail.com", "Password123", Set.of(RoleType.ROLE_USER), true);
 
         this.mockMvc.perform(put(baseUrl + "/user/2")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -258,7 +258,7 @@ public class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.message").value("Provided arguments are not valid"))
                 .andExpect(jsonPath("$.data").exists())
                 .andExpect(jsonPath("$.data.username").value("Username must be from 3 to 10 symbols"))
-                .andExpect(jsonPath("$.data.password").value("The password length must be from 4 no more than 255 characters."))
+                .andExpect(jsonPath("$.data.password").value("Password must contain at least one digit, one lowercase letter, one uppercase letter, and be at least 8 characters long"))
                 .andExpect(jsonPath("$.data.email").value("Email address cannot be empty"))
                 .andExpect(jsonPath("$.data.roles").value("RoleType must not be null"));
     }
@@ -285,7 +285,7 @@ public class UserControllerIntegrationTest {
                         .header("Authorization", tokenAdmin))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
-                .andExpect(jsonPath("$.message").value("user not found"))
+                .andExpect(jsonPath("$.message").value("User with id 3 not found"))
                 .andExpect(jsonPath("$.data").isEmpty());
 
     }
@@ -321,7 +321,7 @@ public class UserControllerIntegrationTest {
     void testChangeUserPasswordSuccess() throws Exception {
 
         Map<String, String> passwordMap = new HashMap<>();
-        passwordMap.put("oldPassword", "user");
+        passwordMap.put("oldPassword", "Password123");
         passwordMap.put("newPassword", "Abc12345");
         passwordMap.put("confirmNewPassword", "Abc12345");
 
@@ -361,7 +361,7 @@ public class UserControllerIntegrationTest {
     void testChangeUserPasswordWithNewPasswordNotMatchingConfirmNewPassword() throws Exception {
 
         Map<String, String> passwordMap = new HashMap<>();
-        passwordMap.put("oldPassword", "user");
+        passwordMap.put("oldPassword", "Password123");
         passwordMap.put("newPassword", "Abc12345");
         passwordMap.put("confirmNewPassword", "AAbc12345");
 
@@ -412,7 +412,6 @@ public class UserControllerIntegrationTest {
                         .header("Authorization", tokenAdmin))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(StatusCode.INVALID_ARGUMENT))
-                .andExpect(jsonPath("$.message").value("New password does not conform to password policy"))
-                .andExpect(jsonPath("$.data").isEmpty());
+                .andExpect(jsonPath("$.message").value("Provided arguments are not valid"));
     }
 }
