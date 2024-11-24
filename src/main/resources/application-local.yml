@@ -1,0 +1,32 @@
+server:
+  port: 8181
+
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  config:
+    activate:
+      on-profile: local
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/tms
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: postgres
+    hikari:
+      schema: tms
+      connection-init-sql: CREATE SCHEMA IF NOT EXISTS tms
+      connection-timeout: 10000
+  liquibase:
+    enabled: true
+    drop-first: false
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    default-schema: tms
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    generate-ddl: true

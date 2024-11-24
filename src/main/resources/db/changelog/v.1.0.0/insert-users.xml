@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="insert-users" author="daff">
+        <insert tableName="users">
+            <column  name="username"  value="admin"/>
+            <column  name="email"  value="admin@mail.com"/>
+            <column  name="password"  value="$2a$12$bJGWinFC76II7.ygA6UdTOKMsPiysLlZ4rphV4n2KwaGwfSmq18wy"/>
+            <column  name="enabled"  value="true"/>
+        </insert>
+        <insert tableName="users">
+            <column  name="username"  value="user"/>
+            <column  name="email"  value="user@mail.com"/>
+            <column  name="password"  value="$2a$12$bJGWinFC76II7.ygA6UdTOKMsPiysLlZ4rphV4n2KwaGwfSmq18wy"/>
+            <column  name="enabled"  value="true"/>
+        </insert>
+
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <include file="create-table-role_type.xml" relativeToChangelogFile="true" />
+    <include file="create-table-priority.xml" relativeToChangelogFile="true" />
+    <include file="create-table-status.xml" relativeToChangelogFile="true" />
+    <include file="create-table-users.xml" relativeToChangelogFile="true" />
+    <include file="create-table-comments.xml" relativeToChangelogFile="true" />
+    <include file="create-table-tasks.xml" relativeToChangelogFile="true" />
+    <include file="create-table-user_roles.xml" relativeToChangelogFile="true" />
+    <include file="create-forignkeys.xml" relativeToChangelogFile="true" />
+    <include file="insert-users.xml" relativeToChangelogFile="true" />
+    <include file="insert-user_roles.xml" relativeToChangelogFile="true" />
+    <include file="insert-tasks.xml" relativeToChangelogFile="true" />
+    <include file="insert-comments.xml" relativeToChangelogFile="true" />
+
+</databaseChangeLog>
