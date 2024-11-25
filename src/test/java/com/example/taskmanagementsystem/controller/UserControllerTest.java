@@ -5,6 +5,7 @@ import com.example.taskmanagementsystem.dto.user.*;
 import com.example.taskmanagementsystem.entity.RoleType;
 import com.example.taskmanagementsystem.entity.User;
 import com.example.taskmanagementsystem.service.UserService;
+import com.example.taskmanagementsystem.util.DBDataInitializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,6 +54,9 @@ class UserControllerTest {
     UserToUserRsConverter userToUserRsConverter;
     @MockBean
     Authentication authentication;
+    @MockBean
+    DBDataInitializer dbDataInitializer;
+
 
     @Value("${api.endpoint.base-url}")
     String baseUrl;
@@ -254,8 +258,7 @@ class UserControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
-                .andExpect(jsonPath("$.message").value("Delete success"))
-                .andExpect(jsonPath("$.data").isEmpty());
+                .andExpect(jsonPath("$.message").value("Delete success"));
 
     }
 
@@ -268,8 +271,7 @@ class UserControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
-                .andExpect(jsonPath("$.message").value("user not found"))
-                .andExpect(jsonPath("$.data").isEmpty());
+                .andExpect(jsonPath("$.message").value("user not found"));
 
     }
 

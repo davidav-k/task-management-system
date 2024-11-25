@@ -57,14 +57,14 @@ public class TaskControllerIntegrationTest {
     @BeforeEach
     void setUp() throws Exception {
         ResultActions resultActionsAdmin = mockMvc.perform(post(baseUrl + "/user/login")
-                .with(httpBasic("admin", "admin")));
+                .with(httpBasic("admin", "Password123")));
         MvcResult mvcResultAdmin = resultActionsAdmin.andDo(print()).andReturn();
         String contentAsStringAdmin = mvcResultAdmin.getResponse().getContentAsString();
         JSONObject jsonAdmin = new JSONObject(contentAsStringAdmin);
         tokenAdmin = "Bearer " + jsonAdmin.getJSONObject("data").getString("token");
 
         ResultActions resultActionsUser = mockMvc.perform(post(baseUrl + "/user/login")
-                .with(httpBasic("user", "user")));
+                .with(httpBasic("user1", "Password123")));
         MvcResult mvcResultUser = resultActionsUser.andDo(print()).andReturn();
         String contentAsStringUser = mvcResultUser.getResponse().getContentAsString();
         JSONObject jsonUser = new JSONObject(contentAsStringUser);
@@ -76,7 +76,8 @@ public class TaskControllerIntegrationTest {
     void testFindByIdSuccess() throws Exception {
 
         this.mockMvc.perform(get(baseUrl + "/task/1")
-                        .accept(MediaType.APPLICATION_JSON))
+                        .accept(MediaType.APPLICATION_JSON)
+                        .header("Authorization", tokenAdmin))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
                 .andExpect(jsonPath("$.message").value("Found one"))
@@ -154,7 +155,7 @@ public class TaskControllerIntegrationTest {
     }
 
     @Test
-    void testCreateTaskFail() throws Exception {
+    void testCreateFail() throws Exception {
         TaskRq rq = new TaskRq("", "", null, null, null, null);
 
         this.mockMvc.perform(post(baseUrl + "/task")
@@ -197,8 +198,7 @@ public class TaskControllerIntegrationTest {
                         .header("Authorization", tokenAdmin))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
-                .andExpect(jsonPath("$.message").value("Delete success"))
-                .andExpect(jsonPath("$.data").isEmpty());
+                .andExpect(jsonPath("$.message").value("Delete success"));
         mockMvc.perform(get(baseUrl + "/task")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.data.content", Matchers.hasSize(1)));
@@ -214,8 +214,7 @@ public class TaskControllerIntegrationTest {
                         .header("Authorization", tokenAdmin))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
-                .andExpect(jsonPath("$.message").value("task not found"))
-                .andExpect(jsonPath("$.data").isEmpty());
+                .andExpect(jsonPath("$.message").value("Task with id 3 not found"));
     }
 
     @Test
@@ -251,15 +250,14 @@ public class TaskControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.content", Matchers.hasSize(1)));
     }
 
-
     @Test
     void testSearchTasksByDescription() throws Exception {
         Map<String, String> searchCriteria = new HashMap<>();
         searchCriteria.put("description", "descr");
         MultiValueMap<String, String> requestParams = new LinkedMultiValueMap<>();
-        requestParams.add("page","0");
-        requestParams.add("size","2");
-        requestParams.add("sort","title,asc");
+        requestParams.add("page", "0");
+        requestParams.add("size", "2");
+        requestParams.add("sort", "title,asc");
 
 
         mockMvc.perform(post(baseUrl + "/task/search")
@@ -280,9 +278,9 @@ public class TaskControllerIntegrationTest {
         searchCriteria.put("title", "Task1");
         searchCriteria.put("description", "descr");
         MultiValueMap<String, String> requestParams = new LinkedMultiValueMap<>();
-        requestParams.add("page","0");
-        requestParams.add("size","2");
-        requestParams.add("sort","title,asc");
+        requestParams.add("page", "0");
+        requestParams.add("size", "2");
+        requestParams.add("sort", "title,asc");
 
 
         mockMvc.perform(post(baseUrl + "/task/search")

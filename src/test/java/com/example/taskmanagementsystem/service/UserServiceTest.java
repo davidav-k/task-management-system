@@ -337,6 +337,4 @@ public class UserServiceTest {
         assertEquals("User with id 1 not found", exception.getMessage());
     }
 
-
-
 }

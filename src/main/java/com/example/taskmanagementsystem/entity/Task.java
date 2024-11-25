@@ -48,7 +48,7 @@ public class   Task implements Serializable {
     @CreationTimestamp
     private Instant createdAt;
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, mappedBy = "task")
+    @OneToMany(mappedBy = "task", fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @Builder.Default
     @ToString.Exclude
     private List<Comment> comments = new ArrayList<>();
@@ -57,10 +57,9 @@ public class   Task implements Serializable {
         if (comments == null) {
             comments = new ArrayList<>();
         }
-        comment.setTask(this);
         comments.add(comment);
+        comment.setTask(this);
     }
-
 
     public Long getAssigneeId() {
         return assignee != null
@@ -72,6 +71,5 @@ public class   Task implements Serializable {
         return author != null
                 ? author.getId()
                 : null;
-
     }
 }

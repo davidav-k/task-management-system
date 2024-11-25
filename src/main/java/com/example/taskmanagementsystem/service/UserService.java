@@ -93,9 +93,7 @@ public class UserService implements UserDetailsService {
         User updateUser = Optional.ofNullable(userRqToUserConverter.convert(rq))
                 .orElseThrow(() -> new IllegalArgumentException(
                         MessageFormatter.format("Conversion failed user {}", rq.username()).getMessage()));
-        User existingUser = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        MessageFormatter.format("User with id {} not found", userId).getMessage()));
+        User existingUser = findById(userId);
 
         validateUsernameAndEmailForUpdate(existingUser, updateUser);
 
