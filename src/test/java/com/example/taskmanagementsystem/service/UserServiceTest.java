@@ -62,17 +62,17 @@ public class UserServiceTest {
                 Set.of(RoleType.ROLE_ADMIN));
         String token = "mockToken";
 
-        Mockito.when(authentication.getPrincipal()).thenReturn(appUserDetails);
-        Mockito.when(appUserDetails.getUser()).thenReturn(user);
-        Mockito.when(userToUserRsConverter.convert(user)).thenReturn(userRs);
-        Mockito.when(jwtProvider.createToken(authentication)).thenReturn(token);
+        when(authentication.getPrincipal()).thenReturn(appUserDetails);
+        when(appUserDetails.getUser()).thenReturn(user);
+        when(userToUserRsConverter.convert(user)).thenReturn(userRs);
+        when(jwtProvider.createToken(authentication)).thenReturn(token);
 
         Map<String, Object> result = userService.createLoginInfo(authentication);
 
         assertNotNull(result);
         assertEquals(userRs, result.get("userInfo"));
         assertEquals(token, result.get("token"));
-        Mockito.verify(redisCacheClient).set(Mockito.eq("whitelist:" + userRs.id()), Mockito.eq(token), Mockito.eq(2L), Mockito.eq(TimeUnit.HOURS));
+        verify(redisCacheClient).set(Mockito.eq("whitelist:" + userRs.id()), Mockito.eq(token), Mockito.eq(2L), Mockito.eq(TimeUnit.HOURS));
     }
 
     @Test
@@ -213,9 +213,9 @@ public class UserServiceTest {
         User existingUser = new User();
         existingUser.setUsername("oldUsername");
 
-        Mockito.when(userRqToUserConverter.convert(rq)).thenReturn(updateUser);
-        Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
-        Mockito.when(userRepository.existsByUsername("takenUsername")).thenReturn(true);
+        when(userRqToUserConverter.convert(rq)).thenReturn(updateUser);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
+        when(userRepository.existsByUsername("takenUsername")).thenReturn(true);
 
         UsernameAlreadyTakenException exception = assertThrows(UsernameAlreadyTakenException.class,
                 () -> userService.update(userId, rq));
@@ -244,10 +244,10 @@ public class UserServiceTest {
                 "admin@mail.com",
                 Set.of(RoleType.ROLE_ADMIN));
 
-        Mockito.when(userRqToUserConverter.convert(rq)).thenReturn(updateUser);
-        Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
-        Mockito.when(userRepository.save(existingUser)).thenReturn(updatedUser);
-        Mockito.when(userToUserRsConverter.convert(updatedUser)).thenReturn(rs);
+        when(userRqToUserConverter.convert(rq)).thenReturn(updateUser);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
+        when(userRepository.save(existingUser)).thenReturn(updatedUser);
+        when(userToUserRsConverter.convert(updatedUser)).thenReturn(rs);
         when(authentication.getAuthorities())
                 .thenReturn((Collection) Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN")));
         SecurityContextHolder.getContext().setAuthentication(authentication);

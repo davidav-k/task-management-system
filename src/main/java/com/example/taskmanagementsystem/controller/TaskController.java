@@ -20,7 +20,6 @@ import java.util.Map;
 public class TaskController {
     private final TaskService taskService;
 
-    //Todo converters to services
     @GetMapping("/{id}")
     public Result findById(@PathVariable Long id) {
         TaskRs rs = taskService.findByIdReturnTaskRs(id);
