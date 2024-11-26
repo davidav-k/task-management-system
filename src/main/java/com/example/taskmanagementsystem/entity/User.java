@@ -9,7 +9,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
+/**
+ * Represents a user in the Task Management System.
+ * Contains credentials, roles, and associations with tasks and comments.
+ */
 @Getter
 @Setter
 @ToString
