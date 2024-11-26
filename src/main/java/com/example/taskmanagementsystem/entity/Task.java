@@ -9,7 +9,10 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-
+/**
+ * Represents a task in the task management system.
+ * A task has an author, an assignee, and is associated with a list of comments.
+ */
 @Getter
 @Setter
 @ToString
@@ -18,7 +21,7 @@ import java.util.List;
 @Builder
 @Entity
 @Table(name = "tasks")
-public class   Task implements Serializable {
+public class Task implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -53,6 +56,11 @@ public class   Task implements Serializable {
     @ToString.Exclude
     private List<Comment> comments = new ArrayList<>();
 
+    /**
+     * Adds a comment to the task and sets the task in the comment.
+     *
+     * @param comment the comment to add
+     */
     public void addComment(Comment comment) {
         if (comments == null) {
             comments = new ArrayList<>();
@@ -61,12 +69,22 @@ public class   Task implements Serializable {
         comment.setTask(this);
     }
 
+    /**
+     * Retrieves the ID of the assignee.
+     *
+     * @return the ID of the assignee, or null if the task is not assigned
+     */
     public Long getAssigneeId() {
         return assignee != null
                 ? assignee.getId()
                 : null;
     }
 
+    /**
+     * Retrieves the ID of the author.
+     *
+     * @return the ID of the author, or null if the author is not set
+     */
     public Long getAuthorId() {
         return author != null
                 ? author.getId()

@@ -5,11 +5,15 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
+/**
+ * Represents a user in the Task Management System.
+ * Contains credentials, roles, and associations with tasks and comments.
+ */
 @Getter
 @Setter
 @ToString
@@ -18,7 +22,7 @@ import java.util.Set;
 @Builder
 @Entity
 @Table(name = "users")
-public class User{
+public class User implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
