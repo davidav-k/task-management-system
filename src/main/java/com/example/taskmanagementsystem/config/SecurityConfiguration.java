@@ -49,6 +49,12 @@ public class SecurityConfiguration {
     @Value("${api.endpoint.base-url}")
     private String baseUrl;
 
+    private static final String[] SWAGGER_WHITELIST = {
+            "/v3/api-docs/**",       // OpenAPI documentation
+            "/swagger-ui/**",        // Swagger UI
+            "/swagger-ui.html",      // Swagger UI HTML
+    };
+
     public SecurityConfiguration(CustomBasicAuthenticationEntryPoint customBasicAuthenticationEntryPoint, CustomBearerTokenAuthenticationEntryPoint customBearerTokenAuthenticationEntryPoint, CustomBearerTokenAccessDeniedHandler customBearerTokenAccessDeniedHandler, UserRequestAuthorizationManager userRequestAuthorizationManager) throws NoSuchAlgorithmException {
         this.customBasicAuthenticationEntryPoint = customBasicAuthenticationEntryPoint;
         this.customBearerTokenAuthenticationEntryPoint = customBearerTokenAuthenticationEntryPoint;
@@ -76,6 +82,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.DELETE, baseUrl + "/user/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PATCH, baseUrl + "/user/**").access(userRequestAuthorizationManager)
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/h2-console/**")).permitAll()
+                        .requestMatchers(SWAGGER_WHITELIST).permitAll()
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))// for H-2 browser console access
