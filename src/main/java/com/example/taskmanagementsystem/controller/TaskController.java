@@ -35,9 +35,10 @@ public class TaskController {
     /**
      * Fetches all tasks.
      *
-     * @return a Result with list of all DTO tasks
+     * @return a result object containing list of all DTO tasks
      */
-    @Operation(summary = "Get all tasks", description = "Retrieves all tasks in the system")
+    @Operation(summary = "Get all tasks",
+            description = "Retrieves all tasks in the system")
 
     @GetMapping
     public Result findAll(Pageable pageable) {
@@ -49,9 +50,10 @@ public class TaskController {
      * Creates a new task.
      *
      * @param rq request to create task
-     * @return the Result with DTO created task
+     * @return a result object containing DTO created task
      */
-    @Operation(summary = "Create a task", description = "Creates a new task with the provided details")
+    @Operation(summary = "Create a task",
+            description = "Creates a new task with the provided details")
     @PostMapping
     public Result create(@RequestBody @Valid TaskRq rq) {
         TaskRs rs = taskService.create(rq);
@@ -63,9 +65,10 @@ public class TaskController {
      *
      * @param id the ID of the task to update
      * @param rq request the updated task details
-     * @return the DTO updated task
+     * @return a result object containing the DTO updated task
      */
-    @Operation(summary = "Update a task", description = "Updates the details of an existing task")
+    @Operation(summary = "Update a task",
+            description = "Updates the details of an existing task")
     @PutMapping("/{id}")
     public Result update(@PathVariable Long id, @RequestBody @Valid TaskRq rq) {
         TaskRs rs = taskService.update(id, rq);
@@ -77,8 +80,10 @@ public class TaskController {
      * Deletes a task by its ID.
      *
      * @param id the ID of the task to delete
+     * @return a result object containing operation result
      */
-    @Operation(summary = "Delete a task", description = "Deletes a specific task by its ID")
+    @Operation(summary = "Delete a task",
+            description = "Deletes a specific task by its ID")
 
     @DeleteMapping("/{id}")
     public Result deleteById(@PathVariable Long id) {
@@ -86,7 +91,13 @@ public class TaskController {
         return new Result(true, StatusCode.SUCCESS, "Delete success");
     }
 
-
+    /**
+     * Retrieves tasks filtered by various criteria.
+     * Supports pagination and filtering by attributes like title, description, status, priority, author, and assignee.
+     *
+     * @param filter the filter object containing criteria for tasks
+     * @return a result object containing a paginated list of tasks matching the filter criteria
+     */
     @Operation(
             summary = "Filter tasks",
             description = "Retrieve tasks based on the provided filter criteria. Supports pagination and filtering by attributes such as title, description, status, priority, author, and assignee."

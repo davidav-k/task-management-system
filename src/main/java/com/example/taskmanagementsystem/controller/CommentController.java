@@ -71,7 +71,7 @@ public class CommentController {
      * Deletes a comment by its ID.
      *
      * @param id the ID of the comment to delete
-     * @return Result with
+     * @return object Result with operation result
      */
     @Operation(summary = "Delete a comment",
             description = "Deletes a specific comment by its ID")

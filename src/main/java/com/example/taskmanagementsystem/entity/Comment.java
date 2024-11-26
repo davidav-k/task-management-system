@@ -7,7 +7,10 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.io.Serializable;
 import java.time.Instant;
-
+/**
+ * Represents a comment in the task management system.
+ * A comment is associated with a user (author) and a task.
+ */
 @Getter
 @Setter
 @ToString
@@ -38,12 +41,22 @@ public class Comment implements Serializable {
     @CreationTimestamp
     private Instant createAt;
 
+    /**
+     * Retrieves the ID of the author of the comment.
+     *
+     * @return the ID of the author, or null if not set
+     */
     public Long getAuthorId() {
         return author != null
                 ? author.getId()
                 : null;
     }
 
+    /**
+     * Retrieves the ID of the task associated with the comment.
+     *
+     * @return the ID of the task, or null if not set
+     */
     public Long getTaskId() {
         return task != null
                 ? task.getId()

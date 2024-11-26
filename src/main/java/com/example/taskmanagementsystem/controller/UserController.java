@@ -20,7 +20,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-
+/**
+ * REST controller for managing users within the Task Management System.
+ * Handles operations like finding, creating, updating, deleting and changing password for users
+ */
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -30,6 +33,25 @@ public class UserController {
 
     private final UserService userService;
 
+    /**
+     * Handles user login and returns login information.
+     * This method uses the Spring Security {@link Authentication} object to retrieve the authenticated user's details.
+     *
+     * @param authentication the authentication object containing user credentials
+     * @return a result object containing user information and a generated JWT token
+     */
+    @Operation(
+            summary = "User login",
+            description = "Authenticates the user and returns user information along with a JWT token.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "User authenticated successfully", content = {
+                            @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Map.class))
+                    }),
+                    @ApiResponse(responseCode = "401",
+                            content = {@Content(schema = @Schema(implementation = Result.class), mediaType = "application/json")})
+            }
+    )
     @PostMapping("/login")
     public Result getLoginInfo(Authentication authentication) {
         log.debug("Authenticated user: {}", authentication.getName());
@@ -37,31 +59,39 @@ public class UserController {
         return new Result(true, StatusCode.SUCCESS, "User info and token", loginInfo);
     }
 
+    /**
+     * Retrieves a user by their ID.
+     *
+     * @param id the ID of the user to retrieve
+     * @return a result object containing the user data if found
+     */
     @Operation(
-            summary = "Get user by id",
-            description = "Return firstName, secondName, countNewses, countComments user's with a specific ID. " +
-                    "Available only to users with a role ADMIN",
-            tags = {"user", "id"}
+            summary = "Get user by ID",
+            description = "Fetches a user by their unique ID and returns the user data.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "User found successfully", content = {
+                            @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = UserRs.class))
+                    }),
+                    @ApiResponse(responseCode = "404",
+                            description = "User not found")
+            }
     )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    content = {@Content(schema = @Schema(implementation = Result.class), mediaType = "application/json")}
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    content = {@Content(schema = @Schema(implementation = Result.class), mediaType = "application/json")}
-            )
-    })
     @GetMapping("/{id}")
     public Result findById(@PathVariable Long id) {
         UserRs rs = userService.findByIdReturnUserRs(id);
         return new Result(true, StatusCode.SUCCESS, "Found one success", rs);
     }
 
+    /**
+     * Retrieves all users in the system.
+     *
+     * @return a result object containing a list of all users
+     */
     @Operation(
             summary = "Get all users",
-            description = "Get all users. Return list of DTO users. Available only to users with a role ADMIN",
+            description = "Get all users. Return list a result object containing a list of all users. Available only to users with a role ADMIN",
             tags = {"user"}
     )
     @ApiResponses({
@@ -80,6 +110,12 @@ public class UserController {
         return new Result(true,StatusCode.SUCCESS, "Found all", rs);
     }
 
+    /**
+     * Creates a new user in the system.
+     *
+     * @param rq the request object containing user details
+     * @return a result object containing the created user's details
+     */
     @Operation(
             summary = "Create new user",
             description = "Return Result with new DTO user. Available only to users with a role ADMIN",
@@ -101,6 +137,13 @@ public class UserController {
         return new Result(true, StatusCode.SUCCESS, "User created successfully", rs);
     }
 
+    /**
+     * Updates a user by their ID with the provided details.
+     *
+     * @param id the ID of the user to update
+     * @param rq the request object containing updated user details
+     * @return a result object containing the updated user details
+     */
     @Operation(
             summary = "Edit user",
             description = "Return edited DTO user. Available only to users with a role ADMIN",
@@ -123,6 +166,13 @@ public class UserController {
         return new Result(true,StatusCode.SUCCESS,"Update success", rs);
     }
 
+
+    /**
+     * Deletes a user by their ID.
+     *
+     * @param id the ID of the user to delete
+     * @return a result object indicating the success of the deletion
+     */
     @Operation(
             summary = "Delete user",
             description = "Delete user with a specific ID. " +
@@ -145,6 +195,14 @@ public class UserController {
         return new Result(true,StatusCode.SUCCESS, "Delete success");
     }
 
+
+    /**
+     * Changes the password of a user identified by their ID.
+     *
+     * @param userId the ID of the user whose password is being changed
+     * @param rq     the request object containing the old password, new password, and confirmation of the new password
+     * @return a result object indicating the success of the password change
+     */
     @Operation(
             summary = "Change password user",
             description = "Change password with a specific ID. " +
