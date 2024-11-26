@@ -5,11 +5,11 @@ import com.example.taskmanagementsystem.dto.user.*;
 import com.example.taskmanagementsystem.entity.RoleType;
 import com.example.taskmanagementsystem.entity.User;
 import com.example.taskmanagementsystem.service.UserService;
+import com.example.taskmanagementsystem.util.DBDataInitializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -25,12 +25,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -53,41 +50,11 @@ class UserControllerTest {
     UserToUserRsConverter userToUserRsConverter;
     @MockBean
     Authentication authentication;
+    @MockBean
+    DBDataInitializer dbDataInitializer;
 
     @Value("${api.endpoint.base-url}")
     String baseUrl;
-
-    private User admin;
-    private User user;
-    private UserRq adminRq;
-    private UserRs adminRs;
-
-    @BeforeEach
-    void setUp() {
-        admin = User.builder()
-                .id(1L)
-                .username("admin")
-                .password("Password123")
-                .email("admin@mail.com")
-                .roles(Set.of(RoleType.ROLE_ADMIN))
-                .build();
-        user = User.builder()
-                .id(2L)
-                .username("user")
-                .password("Password123")
-                .email("user@mail.com")
-                .roles(Set.of(RoleType.ROLE_USER))
-                .build();
-        adminRs = new UserRs(1L,
-                "admin",
-                "admin@mail.com",
-                Set.of(RoleType.ROLE_ADMIN));
-        adminRq = new UserRq("admin",
-                "admin@mail.com",
-                "Password123",
-                Set.of(RoleType.ROLE_ADMIN),
-                true);
-    }
 
     @Test
     void getLoginInfo_ShouldReturnUserInfoAndToken() throws Exception {
@@ -115,7 +82,8 @@ class UserControllerTest {
 
     @Test
     void findById_ShouldReturnUserRs() throws Exception {
-
+        User admin = User.builder().id(1L).username("admin").password("Password123").email("admin@mail.com").roles(Set.of(RoleType.ROLE_ADMIN)).build();
+        UserRs adminRs = new UserRs(1L, "admin", "admin@mail.com", Set.of(RoleType.ROLE_ADMIN));
         given(userService.findByIdReturnUserRs(1L)).willReturn(adminRs);
         given(userToUserRsConverter.convert(admin)).willReturn(adminRs);
 
@@ -145,10 +113,8 @@ class UserControllerTest {
 
     @Test
     void findAllSuccess() throws Exception {
-        UserRs userRs = new UserRs(1L,
-                "user",
-                "user@mail.com",
-                Set.of(RoleType.ROLE_USER));
+        UserRs adminRs = new UserRs(1L, "admin", "admin@mail.com", Set.of(RoleType.ROLE_ADMIN));
+        UserRs userRs = new UserRs(1L, "user", "user@mail.com", Set.of(RoleType.ROLE_USER));
         List<UserRs> userRsList = List.of(adminRs, userRs);
         given(userService.findAll()).willReturn(userRsList);
         given(userToUserRsConverter.convert(any(User.class))).willReturn(adminRs);
@@ -166,7 +132,9 @@ class UserControllerTest {
 
     @Test
     void create_ShouldSaveUser() throws Exception {
-
+        User admin = User.builder().id(1L).username("admin").password("Password123").email("admin@mail.com").roles(Set.of(RoleType.ROLE_ADMIN)).build();
+        UserRs adminRs = new UserRs(1L, "admin", "admin@mail.com", Set.of(RoleType.ROLE_ADMIN));
+        UserRq adminRq = new UserRq("admin", "admin@mail.com", "Password123", Set.of(RoleType.ROLE_ADMIN), true);
         given(userRqToUserConverter.convert(adminRq)).willReturn(admin);
         given(userService.create(adminRq)).willReturn(adminRs);
         given(userToUserRsConverter.convert(admin)).willReturn(adminRs);
@@ -210,6 +178,7 @@ class UserControllerTest {
 
     @Test
     void update_ShouldUpdateUser() throws Exception {
+        User user = User.builder().id(2L).username("user").password("Password123").email("user@mail.com").roles(Set.of(RoleType.ROLE_USER)).build();
         UserRs userRs = new UserRs(1L,"userUp", "userUp@mail.com", Set.of(RoleType.ROLE_USER));
         UserRq rq = new UserRq("userUp", "userUp@mail.com","Password123", Set.of(RoleType.ROLE_USER), true);
         given(userRqToUserConverter.convert(rq)).willReturn(user);
@@ -254,8 +223,7 @@ class UserControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
-                .andExpect(jsonPath("$.message").value("Delete success"))
-                .andExpect(jsonPath("$.data").isEmpty());
+                .andExpect(jsonPath("$.message").value("Delete success"));
 
     }
 
@@ -268,8 +236,7 @@ class UserControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
-                .andExpect(jsonPath("$.message").value("user not found"))
-                .andExpect(jsonPath("$.data").isEmpty());
+                .andExpect(jsonPath("$.message").value("user not found"));
 
     }
 

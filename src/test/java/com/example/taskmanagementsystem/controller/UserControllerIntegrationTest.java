@@ -38,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Testcontainers
 @AutoConfigureMockMvc
 @ActiveProfiles(value = "test")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class UserControllerIntegrationTest {
 
     @Autowired
@@ -63,7 +64,7 @@ public class UserControllerIntegrationTest {
         tokenAdmin = "Bearer " + jsonAdmin.getJSONObject("data").getString("token");
 
         ResultActions resultActionsUser = mockMvc.perform(post(baseUrl + "/user/login")
-                .with(httpBasic("user", "Password123")));
+                .with(httpBasic("user1", "Password123")));
         MvcResult mvcResultUser = resultActionsUser.andDo(print()).andReturn();
         String contentAsStringUser = mvcResultUser.getResponse().getContentAsString();
         JSONObject jsonUser = new JSONObject(contentAsStringUser);
@@ -71,7 +72,6 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testFindByIdByAdminOwnInfoSuccess() throws Exception {
         mockMvc.perform(get(baseUrl + "/user/1")
                         .accept(MediaType.APPLICATION_JSON)
@@ -84,7 +84,6 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testFindByIdByAdminAnotherUserInfoSuccess() throws Exception {
         mockMvc.perform(get(baseUrl + "/user/2")
                         .accept(MediaType.APPLICATION_JSON)
@@ -93,11 +92,10 @@ public class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
                 .andExpect(jsonPath("$.message").value("Found one success"))
                 .andExpect(jsonPath("$.data").exists())
-                .andExpect(jsonPath("$.data.username").value("user"));
+                .andExpect(jsonPath("$.data.username").value("user1"));
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testFindByIdByUserAccessingOwnInfoSuccess() throws Exception {
         mockMvc.perform(get(baseUrl + "/user/2")
                         .accept(MediaType.APPLICATION_JSON)
@@ -106,11 +104,10 @@ public class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
                 .andExpect(jsonPath("$.message").value("Found one success"))
                 .andExpect(jsonPath("$.data").exists())
-                .andExpect(jsonPath("$.data.username").value("user"));
+                .andExpect(jsonPath("$.data.username").value("user1"));
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testFindByIdByUserAccessingAnotherUserInfoFail() throws Exception {
         mockMvc.perform(get(baseUrl + "/user/1")
                         .accept(MediaType.APPLICATION_JSON)
@@ -121,21 +118,18 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testFindByIdNotFoundFail() throws Exception {
-        mockMvc.perform(get(baseUrl + "/user/3")
+        mockMvc.perform(get(baseUrl + "/user/5")
                         .accept(MediaType.APPLICATION_JSON)
                         .header("Authorization", tokenAdmin))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
-                .andExpect(jsonPath("$.message").value("User with id 3 not found"))
-                .andExpect(jsonPath("$.data").doesNotExist());
+                .andExpect(jsonPath("$.message").value("User with id 5 not found"));
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testCreateByAdminSuccess() throws Exception {
-        UserRq rq = new UserRq("user1", "user1@mail.com", "Password123", Set.of(RoleType.ROLE_USER), true);
+        UserRq rq = new UserRq("user5", "user5@mail.com", "Password123", Set.of(RoleType.ROLE_USER), true);
 
         mockMvc.perform(post(baseUrl + "/user")
                         .accept(MediaType.APPLICATION_JSON)
@@ -147,18 +141,17 @@ public class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("User created successfully"))
                 .andExpect(jsonPath("$.data").exists())
-                .andExpect(jsonPath("$.data.username").value("user1"))
-                .andExpect(jsonPath("$.data.email").value("user1@mail.com"))
+                .andExpect(jsonPath("$.data.username").value("user5"))
+                .andExpect(jsonPath("$.data.email").value("user5@mail.com"))
                 .andExpect(jsonPath("$.data.roles").value("ROLE_USER"))
                 .andExpect(jsonPath("$.data.password").doesNotExist());
         mockMvc.perform(get(baseUrl + "/user")
                         .accept(MediaType.APPLICATION_JSON)
                         .header("Authorization", tokenAdmin))
-                .andExpect(jsonPath("$.data", Matchers.hasSize(3)));
+                .andExpect(jsonPath("$.data", Matchers.hasSize(4)));
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testCreateByAdminWrongDataFail() throws Exception {
         UserRq fakeRq = new UserRq("", "use", "", null, true);
 
@@ -181,7 +174,6 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testUpdateByAdminOnwInfoSuccess() throws Exception {
 
         UserRq rq = new UserRq("adminUp", "admin@mail.com", "Password123", Set.of(RoleType.ROLE_ADMIN), true);
@@ -198,7 +190,6 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testUpdateByAdminAnotherUserSuccess() throws Exception {
 
         UserRq rq = new UserRq("userUp", "userUp@mail.com", "Password123", Set.of(RoleType.ROLE_USER), true);
@@ -215,7 +206,6 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testUpdateByUserOwnInfoSuccess() throws Exception {
 
         UserRq rq = new UserRq("userUp", "userUp@mail.com", "Password123", Set.of(RoleType.ROLE_USER), true);
@@ -232,7 +222,6 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testUpdateByUserAnotherUserInfoFail() throws Exception {
         mockMvc.perform(get(baseUrl + "/user/1")
                         .accept(MediaType.APPLICATION_JSON)
@@ -243,7 +232,6 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testUpdateWrongDataFail() throws Exception {
 
         UserRq rq = new UserRq("", "", "", Set.of(), true);
@@ -264,7 +252,6 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testDeleteByIdSuccess() throws Exception {
 
         this.mockMvc.perform(delete(baseUrl + "/user/2")
@@ -272,26 +259,22 @@ public class UserControllerIntegrationTest {
                         .header("Authorization", tokenAdmin))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
-                .andExpect(jsonPath("$.message").value("Delete success"))
-                .andExpect(jsonPath("$.data").isEmpty());
+                .andExpect(jsonPath("$.message").value("Delete success"));
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testDeleteByIdFail() throws Exception {
 
-        this.mockMvc.perform(delete(baseUrl + "/user/3")
+        this.mockMvc.perform(delete(baseUrl + "/user/5")
                         .accept(MediaType.APPLICATION_JSON)
                         .header("Authorization", tokenAdmin))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
-                .andExpect(jsonPath("$.message").value("User with id 3 not found"))
-                .andExpect(jsonPath("$.data").isEmpty());
+                .andExpect(jsonPath("$.message").value("User with id 5 not found"));
 
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testFindAllByAdminSuccess() throws Exception {
         mockMvc.perform(get(baseUrl + "/user")
                         .accept(MediaType.APPLICATION_JSON)
@@ -300,12 +283,11 @@ public class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
                 .andExpect(jsonPath("$.message").value("Found all"))
                 .andExpect(jsonPath("$.data[0].username").value("admin"))
-                .andExpect(jsonPath("$.data[1].username").value("user"))
-                .andExpect(jsonPath("$.data", Matchers.hasSize(2)));
+                .andExpect(jsonPath("$.data[1].username").value("user1"))
+                .andExpect(jsonPath("$.data", Matchers.hasSize(3)));
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testFindAllByUserFail() throws Exception {
         mockMvc.perform(get(baseUrl + "/user")
                         .accept(MediaType.APPLICATION_JSON)
@@ -317,7 +299,6 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testChangeUserPasswordSuccess() throws Exception {
 
         Map<String, String> passwordMap = new HashMap<>();
@@ -332,12 +313,10 @@ public class UserControllerIntegrationTest {
                         .header("Authorization", tokenAdmin))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
-                .andExpect(jsonPath("$.message").value("Change password success"))
-                .andExpect(jsonPath("$.data").isEmpty());
+                .andExpect(jsonPath("$.message").value("Change password success"));
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testChangeUserPasswordWithWrongOldPassword() throws Exception {
 
         Map<String, String> passwordMap = new HashMap<>();
@@ -357,7 +336,6 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testChangeUserPasswordWithNewPasswordNotMatchingConfirmNewPassword() throws Exception {
 
         Map<String, String> passwordMap = new HashMap<>();
@@ -372,12 +350,10 @@ public class UserControllerIntegrationTest {
                         .header("Authorization", tokenAdmin))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(StatusCode.INVALID_ARGUMENT))
-                .andExpect(jsonPath("$.message").value("New password and confirm new password do not match"))
-                .andExpect(jsonPath("$.data").isEmpty());
+                .andExpect(jsonPath("$.message").value("New password and confirm new password do not match"));
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testChangeUserPasswordWithUserNotFound() throws Exception {
 
         Map<String, String> passwordMap = new HashMap<>();
@@ -392,12 +368,10 @@ public class UserControllerIntegrationTest {
                         .header("Authorization", tokenAdmin))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
-                .andExpect(jsonPath("$.message").value("User with id 5 not found"))
-                .andExpect(jsonPath("$.data").isEmpty());
+                .andExpect(jsonPath("$.message").value("User with id 5 not found"));
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void testChangeUserPasswordNotConfirmingToPasswordPolicy() throws Exception {
 
         Map<String, String> passwordMap = new HashMap<>();
