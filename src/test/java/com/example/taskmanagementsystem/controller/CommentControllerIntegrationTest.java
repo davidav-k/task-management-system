@@ -21,9 +21,12 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+
+import java.time.Duration;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -34,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Testcontainers
 @AutoConfigureMockMvc
 @ActiveProfiles(value = "test")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class CommentControllerIntegrationTest {
     @Autowired
     MockMvc mockMvc;
@@ -44,9 +48,15 @@ public class CommentControllerIntegrationTest {
     String tokenAdmin;
     String tokenUser;
 
+
+
     @Container
     @ServiceConnection
-    static RedisContainer redisContainer = new RedisContainer(DockerImageName.parse("redis:6.2.6"));
+    static RedisContainer redisContainer = new RedisContainer(DockerImageName.parse("redis:6.2.6"))
+            .withStartupTimeout(Duration.ofSeconds(60))
+            .waitingFor(Wait.forListeningPort())
+            .waitingFor(Wait.forLogMessage(".*Ready to accept connections.*\\n", 1));
+
 
     @BeforeEach
     void setUp() throws Exception {
@@ -63,6 +73,7 @@ public class CommentControllerIntegrationTest {
         String contentAsStringUser = mvcResultUser.getResponse().getContentAsString();
         JSONObject jsonUser = new JSONObject(contentAsStringUser);
         tokenUser = "Bearer " + jsonUser.getJSONObject("data").getString("token");
+
     }
     @AfterEach
     void tearDown() {

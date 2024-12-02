@@ -15,7 +15,6 @@ public record UserRq(
         @Schema(description = "Username of the user",
                 example = "john_doe")
         @Length(min = 3, max = 10, message = "Username must be from {min} to {max} symbols")
-        @NotBlank(message = "Username must not be empty")
         String username,
 
         @Schema(description = "Email address of the user",

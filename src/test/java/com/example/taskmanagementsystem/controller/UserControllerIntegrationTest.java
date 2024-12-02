@@ -20,6 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
@@ -169,7 +170,7 @@ public class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.username").value("Username must be from 3 to 10 symbols"))
                 .andExpect(jsonPath("$.data.email").value("The email address must be in the format user@example.com"))
                 .andExpect(jsonPath("$.data.password").value("Password must contain at least one digit, one lowercase letter, one uppercase letter, and be at least 8 characters long"))
-                .andExpect(jsonPath("$.data.roles").value("RoleType must not be null"));
+                .andExpect(jsonPath("$.data.roles").value("RoleType must not be null or empty"));
 
     }
 
@@ -248,7 +249,7 @@ public class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.username").value("Username must be from 3 to 10 symbols"))
                 .andExpect(jsonPath("$.data.password").value("Password must contain at least one digit, one lowercase letter, one uppercase letter, and be at least 8 characters long"))
                 .andExpect(jsonPath("$.data.email").value("Email address cannot be empty"))
-                .andExpect(jsonPath("$.data.roles").value("RoleType must not be null"));
+                .andExpect(jsonPath("$.data.roles").value("RoleType must not be null or empty"));
     }
 
     @Test
